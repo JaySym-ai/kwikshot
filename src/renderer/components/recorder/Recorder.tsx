@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { AlertTriangle, CheckCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Play, Square, Pause, Monitor, Camera, Mic, Radio } from 'lucide-react';
 import { useRecordingStore } from '../../stores/recordingStore';
 import { ScreenRecordingService } from '../../services/ScreenRecordingService';
 import { RecordingControls } from './RecordingControls';
@@ -10,9 +10,10 @@ import { RecordingTest } from './RecordingTest';
 
 interface RecorderProps {
   onSwitchToEditor: () => void;
+  onSwitchToStreaming?: () => void;
 }
 
-export const Recorder: React.FC<RecorderProps> = ({ onSwitchToEditor }) => {
+export const Recorder: React.FC<RecorderProps> = ({ onSwitchToEditor, onSwitchToStreaming }) => {
   const {
     isRecording,
     isPaused,
@@ -182,6 +183,21 @@ export const Recorder: React.FC<RecorderProps> = ({ onSwitchToEditor }) => {
             onPauseRecording={handlePauseRecording}
             onResumeRecording={handleResumeRecording}
           />
+
+          {/* Go Live Button */}
+          {onSwitchToStreaming && !isRecording && (
+            <div className="flex justify-center">
+              <motion.button
+                onClick={onSwitchToStreaming}
+                className="btn-secondary bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 flex items-center space-x-2 px-6 py-3"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Radio size={20} />
+                <span>Go Live</span>
+              </motion.button>
+            </div>
+          )}
 
           {/* Source Selection */}
           <SourceSelector />

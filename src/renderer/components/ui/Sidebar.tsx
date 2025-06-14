@@ -1,10 +1,10 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Video, Scissors, Settings, Folder } from 'lucide-react';
+import { Video, Scissors, Radio, Settings, Folder } from 'lucide-react';
 
 interface SidebarProps {
-  currentView: 'recorder' | 'editor' | 'settings';
-  onViewChange: (view: 'recorder' | 'editor' | 'settings') => void;
+  currentView: 'recorder' | 'editor' | 'streaming' | 'settings';
+  onViewChange: (view: 'recorder' | 'editor' | 'streaming' | 'settings') => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) => {
@@ -14,6 +14,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) =
       icon: Video,
       label: 'Recorder',
       description: 'Capture screen, webcam & audio'
+    },
+    {
+      id: 'streaming' as const,
+      icon: Radio,
+      label: 'Live Stream',
+      description: 'Stream live to your audience'
     },
     {
       id: 'editor' as const,

@@ -4,6 +4,7 @@ const webpack = require('webpack');
 
 module.exports = (env, argv) => {
   const isDevelopment = argv.mode === 'development';
+  const port = process.env.PORT || 3000;
 
   return {
     entry: './src/renderer/index.tsx',
@@ -63,12 +64,30 @@ module.exports = (env, argv) => {
       }),
     ],
     devServer: {
-      port: 3000,
+      port: port,
+      host: '0.0.0.0', // Allow connections from any host (required for Docker)
       hot: true,
-      // Remove static directory to prevent conflicts with webpack-generated content
-      // static: {
-      //   directory: path.join(__dirname, 'dist/renderer'),
-      // },
+      allowedHosts: 'all', // Allow all hosts (required for Docker)
+      client: {
+        webSocketURL: {
+          protocol: 'ws',
+          hostname: 'localhost',
+          port: port,
+          pathname: '/ws',
+        },
+        overlay: {
+          errors: true,
+          warnings: false,
+        },
+      },
+      static: {
+        directory: path.join(__dirname, 'dist/renderer'),
+      },
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
+        'Access-Control-Allow-Headers': 'X-Requested-With, content-type, Authorization',
+      },
     },
   };
 };

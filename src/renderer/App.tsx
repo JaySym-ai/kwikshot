@@ -3,11 +3,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Recorder } from './components/recorder/Recorder';
 import { Editor } from './components/editor/Editor';
 import { Settings } from './components/settings/Settings';
+import { StreamingView } from './components/streaming/StreamingView';
 import { TitleBar } from './components/ui/TitleBar';
 import { Sidebar } from './components/ui/Sidebar';
 import { ToastProvider } from './contexts/ToastContext';
 
-type AppView = 'recorder' | 'editor' | 'settings';
+type AppView = 'recorder' | 'editor' | 'streaming' | 'settings';
 
 export const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<AppView>('recorder');
@@ -46,7 +47,10 @@ export const App: React.FC = () => {
                   transition={pageTransition}
                   className="h-full"
                 >
-                  <Recorder onSwitchToEditor={() => setCurrentView('editor')} />
+                  <Recorder
+                    onSwitchToEditor={() => setCurrentView('editor')}
+                    onSwitchToStreaming={() => setCurrentView('streaming')}
+                  />
                 </motion.div>
               )}
 
@@ -61,6 +65,20 @@ export const App: React.FC = () => {
                   className="h-full"
                 >
                   <Editor onSwitchToRecorder={() => setCurrentView('recorder')} />
+                </motion.div>
+              )}
+
+              {currentView === 'streaming' && (
+                <motion.div
+                  key="streaming"
+                  initial="initial"
+                  animate="in"
+                  exit="out"
+                  variants={pageVariants}
+                  transition={pageTransition}
+                  className="h-full"
+                >
+                  <StreamingView onSwitchToRecorder={() => setCurrentView('recorder')} />
                 </motion.div>
               )}
 

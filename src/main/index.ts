@@ -4,9 +4,11 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as isDev from 'electron-is-dev';
+import { StreamManager } from './streaming/stream-manager';
 
 class KwikShotApp {
   private mainWindow: BrowserWindow | null = null;
+  private streamManager: StreamManager | null = null;
 
   constructor() {
     this.initializeApp();
@@ -26,6 +28,9 @@ class KwikShotApp {
 
     // Handle window closed
     app.on('window-all-closed', () => {
+      if (this.streamManager) {
+        this.streamManager.destroy();
+      }
       if (process.platform !== 'darwin') {
         app.quit();
       }
@@ -75,6 +80,7 @@ class KwikShotApp {
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true,
+
         allowRunningInsecureContent: false,
         preload: path.join(__dirname, '../preload/index.js'),
       },
@@ -115,6 +121,22 @@ class KwikShotApp {
   }
 
   private setupIpcHandlers(): void {
+    // Initialize stream manager
+    this.streamManager = new StreamManager();
+
+    // Set up streaming event forwarding
+    this.streamManager.on('metrics-update', (metrics: any) => {
+      this.mainWindow?.webContents.send('stream-metrics-update', metrics);
+    });
+
+    this.streamManager.on('error', (error: any) => {
+      this.mainWindow?.webContents.send('stream-error', error);
+    });
+
+    this.streamManager.on('status-change', (status: any) => {
+      this.mainWindow?.webContents.send('stream-status-change', status);
+    });
+
     // Get available screens for recording
     ipcMain.handle('get-sources', async () => {
       try {
@@ -239,6 +261,73 @@ class KwikShotApp {
         console.error('Error opening folder:', error);
         return false;
       }
+    });
+    // Streaming IPC handlers
+    ipcMain.handle('start-rtmp-stream', async (_, config, settings) => {
+      try {
+        if (!this.streamManager) {
+          throw new Error('Stream manager not initialized');
+        }
+        await this.streamManager.startRTMPStream(config, settings);
+      } catch (error) {
+        console.error('Failed to start RTMP stream:', error);
+        throw error;
+      }
+    });
+
+    ipcMain.handle('start-webrtc-stream', async (_, config, settings) => {
+      try {
+        if (!this.streamManager) {
+          throw new Error('Stream manager not initialized');
+        }
+        await this.streamManager.startWebRTCStream(config, settings);
+      } catch (error) {
+        console.error('Failed to start WebRTC stream:', error);
+        throw error;
+      }
+    });
+
+    ipcMain.handle('stop-stream', async () => {
+      try {
+        if (!this.streamManager) {
+          throw new Error('Stream manager not initialized');
+        }
+        await this.streamManager.stopStream();
+      } catch (error) {
+        console.error('Failed to stop stream:', error);
+        throw error;
+      }
+    });
+
+    ipcMain.handle('pause-stream', async () => {
+      try {
+        if (!this.streamManager) {
+          throw new Error('Stream manager not initialized');
+        }
+        await this.streamManager.pauseStream();
+      } catch (error) {
+        console.error('Failed to pause stream:', error);
+        throw error;
+      }
+    });
+
+    ipcMain.handle('resume-stream', async () => {
+      try {
+        if (!this.streamManager) {
+          throw new Error('Stream manager not initialized');
+        }
+        await this.streamManager.resumeStream();
+      } catch (error) {
+        console.error('Failed to resume stream:', error);
+        throw error;
+      }
+    });
+
+    ipcMain.handle('get-stream-metrics', () => {
+      if (!this.streamManager) {
+        throw new Error('Stream manager not initialized');
+      }
+      return this.streamManager.getMetrics();
     });
   }
 }

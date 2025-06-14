@@ -8,9 +8,9 @@
 
 ![KwikShot Logo](https://img.shields.io/badge/KwikShot-Screen%20Recorder-blue?style=for-the-badge&logo=video&logoColor=white)
 
-**Professional Screen Recorder & Video Editor**
+**Professional Screen Recorder, Video Editor & Live Streaming Platform**
 
-*Capture your screen, webcam, and audio with professional quality*
+*Capture, edit, and stream your content with professional quality*
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Electron](https://img.shields.io/badge/Electron-36.4.0-47848F?style=flat&logo=electron&logoColor=white)](https://electronjs.org/)
@@ -43,6 +43,14 @@
 - **Multiple Tracks**: Separate video and audio track management
 - **Export Options**: Multiple format support (MP4, MOV, WebM)
 
+### 📡 **Live Streaming**
+- **Multi-Platform Streaming**: Stream to YouTube, Twitch, Facebook Live, and custom RTMP servers
+- **Real-time Streaming**: Low-latency streaming with hardware acceleration
+- **Stream Management**: Start, stop, pause, and resume streams with one click
+- **Stream Monitoring**: Real-time metrics including bitrate, FPS, and connection status
+- **Custom RTMP**: Support for any RTMP-compatible streaming service
+- **WebRTC Support**: Browser-based streaming for modern platforms
+
 ### 🎨 **Modern Interface**
 - **Dark Theme**: Beautiful dark UI with glass morphism effects
 - **Responsive Design**: Adaptive layout for different screen sizes
@@ -69,11 +77,26 @@
 *Professional timeline editor with drag-and-drop functionality*
 
 
+### 📡 Live Streaming Interface
+*Professional streaming controls with real-time metrics*
+
 ### 🎨 Modern Dark UI
 *Beautiful dark theme with glass morphism effects*
 
 
 </div>
+
+---
+
+## 📋 Table of Contents
+
+- [🚀 Installation](#-installation)
+- [📖 Usage](#-usage)
+- [📡 Live Streaming](#-live-streaming) ⭐ **New Feature!**
+- [🛠️ Tech Stack](#️-tech-stack)
+- [🤝 Contributing](#-contributing)
+- [🎯 Roadmap](#-roadmap)
+- [📞 Support](#-support)
 
 ---
 
@@ -227,6 +250,216 @@ make build && make start
 | Switch to Editor | `Ctrl/Cmd + E` |
 | Export Video | `Ctrl/Cmd + S` |
 | Play/Pause | `Space` |
+| Go Live | `Ctrl/Cmd + L` |
+
+---
+
+## 📡 Live Streaming
+
+KwikShot includes powerful live streaming capabilities that allow you to broadcast directly to popular platforms or any custom RTMP server.
+
+### 🚀 Quick Start
+
+1. **Navigate to Live Stream**: Click the "Live Stream" tab in the sidebar
+2. **Configure Stream Settings**: Set up your streaming platform and quality settings
+3. **Test Your Setup**: Use the preview to ensure everything looks good
+4. **Go Live**: Click "Start Stream" to begin broadcasting
+
+### 🎯 Supported Platforms
+
+#### **Popular Streaming Services**
+- **YouTube Live**: Direct integration with YouTube's streaming API
+- **Twitch**: Stream to Twitch with optimized settings
+- **Facebook Live**: Broadcast to Facebook Live
+- **Custom RTMP**: Any RTMP-compatible service
+
+#### **Configuration Examples**
+
+**YouTube Live**
+```json
+{
+  "platform": "youtube",
+  "streamKey": "your-youtube-stream-key",
+  "server": "rtmp://a.rtmp.youtube.com/live2/",
+  "quality": "1080p",
+  "bitrate": 4500
+}
+```
+
+**Twitch**
+```json
+{
+  "platform": "twitch",
+  "streamKey": "your-twitch-stream-key",
+  "server": "rtmp://live.twitch.tv/live/",
+  "quality": "1080p",
+  "bitrate": 6000
+}
+```
+
+**Custom RTMP Server**
+```json
+{
+  "platform": "custom",
+  "streamKey": "your-stream-key",
+  "server": "rtmp://your-server.com/live/",
+  "quality": "720p",
+  "bitrate": 3000
+}
+```
+
+### ⚙️ Stream Configuration
+
+#### **Video Settings**
+- **Resolution**: 720p, 1080p, 1440p, 4K
+- **Frame Rate**: 30 FPS, 60 FPS
+- **Bitrate**: 1000-8000 kbps (auto-calculated based on quality)
+- **Encoder**: Hardware (recommended) or Software encoding
+
+#### **Audio Settings**
+- **Sample Rate**: 44.1 kHz, 48 kHz
+- **Bitrate**: 128 kbps, 192 kbps, 320 kbps
+- **Channels**: Mono, Stereo
+
+#### **Advanced Options**
+- **Keyframe Interval**: 2-4 seconds (recommended: 2s)
+- **Buffer Size**: Auto or manual configuration
+- **Low Latency Mode**: Enable for real-time interaction
+- **Hardware Acceleration**: GPU encoding for better performance
+
+### 📊 Stream Monitoring
+
+KwikShot provides real-time monitoring of your stream:
+
+- **Connection Status**: Live connection health indicator
+- **Bitrate**: Current upload bitrate and target bitrate
+- **Frame Rate**: Actual vs target frame rate
+- **Dropped Frames**: Monitor for performance issues
+- **Stream Duration**: Total streaming time
+- **Viewer Count**: (when supported by platform)
+
+### 🛠️ Setup Instructions
+
+#### **1. Get Your Stream Key**
+
+**YouTube Live**
+1. Go to [YouTube Studio](https://studio.youtube.com)
+2. Click "Go Live" → "Stream"
+3. Copy your "Stream key"
+4. Copy the "Stream URL" (usually `rtmp://a.rtmp.youtube.com/live2/`)
+
+**Twitch**
+1. Go to [Twitch Creator Dashboard](https://dashboard.twitch.tv)
+2. Navigate to "Settings" → "Stream"
+3. Copy your "Primary Stream key"
+4. Server URL is `rtmp://live.twitch.tv/live/`
+
+**Facebook Live**
+1. Go to [Facebook Live Producer](https://www.facebook.com/live/producer)
+2. Create a new live video
+3. Copy the "Server URL" and "Stream Key"
+
+#### **2. Configure KwikShot**
+
+1. **Open Live Stream Tab**: Click the radio icon in the sidebar
+2. **Select Platform**: Choose your streaming platform or "Custom RTMP"
+3. **Enter Credentials**:
+   - **Stream Key**: Paste your stream key
+   - **Server URL**: Enter the RTMP server URL
+4. **Set Quality**: Choose resolution and bitrate based on your internet speed
+5. **Test Connection**: Use the "Test Stream" button to verify settings
+
+#### **3. Optimize Your Settings**
+
+**Internet Speed Recommendations**
+- **720p 30fps**: 3-5 Mbps upload
+- **1080p 30fps**: 5-8 Mbps upload
+- **1080p 60fps**: 8-12 Mbps upload
+- **1440p 60fps**: 12-20 Mbps upload
+
+**Hardware Requirements**
+- **CPU**: Intel i5-8400 / AMD Ryzen 5 2600 or better
+- **GPU**: NVIDIA GTX 1060 / AMD RX 580 or better (for hardware encoding)
+- **RAM**: 8GB minimum, 16GB recommended
+
+### 🎮 Stream Controls
+
+#### **Basic Controls**
+- **Start Stream**: Begin broadcasting to your configured platform
+- **Stop Stream**: End the current stream
+- **Pause Stream**: Temporarily pause the stream (if supported)
+- **Resume Stream**: Resume a paused stream
+
+#### **Advanced Features**
+- **Scene Switching**: Switch between different recording sources
+- **Audio Mixing**: Adjust microphone and system audio levels
+- **Stream Preview**: See exactly what your viewers will see
+- **Recording While Streaming**: Save a local copy while streaming live
+
+### 🔧 Troubleshooting
+
+#### **Common Issues**
+
+**Stream Won't Start**
+```bash
+# Check your stream key and server URL
+# Verify internet connection (test with speedtest)
+# Ensure firewall isn't blocking RTMP traffic
+```
+
+**Poor Stream Quality**
+```bash
+# Reduce bitrate or resolution
+# Enable hardware encoding if available
+# Close other bandwidth-intensive applications
+# Check for dropped frames in stream monitor
+```
+
+**Audio Issues**
+```bash
+# Check audio device selection
+# Verify audio levels aren't too high/low
+# Test with different audio sample rates
+# Ensure exclusive mode is disabled for audio devices
+```
+
+**Connection Drops**
+```bash
+# Check internet stability
+# Reduce bitrate to match upload speed
+# Use wired connection instead of WiFi
+# Contact your ISP if issues persist
+```
+
+#### **Performance Optimization**
+
+**For Better Performance**
+1. **Use Hardware Encoding**: Enable GPU encoding in settings
+2. **Close Unnecessary Apps**: Free up CPU and memory
+3. **Wired Connection**: Use Ethernet instead of WiFi
+4. **Dedicated Streaming PC**: Use a separate computer for streaming (advanced)
+
+**Quality vs Performance Balance**
+- **High Quality**: 1080p60, 6000 kbps (requires powerful hardware)
+- **Balanced**: 1080p30, 4500 kbps (good for most setups)
+- **Performance**: 720p30, 3000 kbps (works on older hardware)
+
+### 📱 Platform-Specific Tips
+
+#### **YouTube Live**
+- Enable "Low Latency" for real-time chat interaction
+- Use 1080p for best quality (YouTube compresses heavily)
+- Schedule streams in advance for better discoverability
+
+#### **Twitch**
+- Use 6000 kbps max bitrate (Twitch limit)
+- Enable "Low Latency Mode" for better chat interaction
+- Consider using 936p (1664x936) for better quality at 6000 kbps
+
+#### **Facebook Live**
+- Use square (1:1) or vertical (9:16) aspect ratios for mobile viewers
+- Enable captions for better accessibility
+- Stream to Facebook Pages for business content
 
 ---
 
@@ -306,18 +539,24 @@ AugmentCode empowers developers to build better software faster through AI-assis
 
 ## 🎯 Roadmap
 
-### Upcoming Features
-- [ ] **Live Streaming**: Direct streaming to YouTube, Twitch, and other platforms
+### ✅ Recently Completed
+- [x] **Live Streaming**: Direct streaming to YouTube, Twitch, Facebook Live, and custom RTMP servers
+- [x] **Stream Monitoring**: Real-time metrics including bitrate, FPS, and connection status
+- [x] **Multi-Platform Support**: Integrated streaming to popular platforms with optimized settings
+- [x] **Modern UI**: Dark theme with glass morphism effects
+- [x] **Cross-platform**: Windows, macOS, and Linux support
+
+### 🚧 In Progress
+- [ ] **Advanced Stream Features**: Stream overlays, scene switching, and multi-streaming
+- [ ] **Stream Recording**: Save local copies while streaming live
+
+### 📋 Upcoming Features
 - [ ] **Advanced Editing**: Color correction, filters, and effects
 - [ ] **Cloud Storage**: Integration with Google Drive, Dropbox, and OneDrive
 - [ ] **Collaboration**: Real-time collaborative editing
 - [ ] **Mobile App**: Companion mobile app for remote control
 - [ ] **AI Features**: Auto-transcription and smart editing suggestions
-
-### Recent Updates
-- [x] **v0.1.0**: Initial release with basic recording and editing
-- [x] **Modern UI**: Dark theme with glass morphism effects
-- [x] **Cross-platform**: Windows, macOS, and Linux support
+- [ ] **Plugin System**: Third-party integrations and custom extensions
 
 ---
 

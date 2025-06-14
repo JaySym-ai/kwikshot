@@ -53,16 +53,16 @@ USER kwikshot
 # This compiles TypeScript and builds the renderer for production
 RUN npm run build
 
-# Expose the port that the development server runs on
-EXPOSE 3000
-
-# Health check to ensure the application is running
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:3000 || exit 1
-
 # Set environment variables
 ENV NODE_ENV=production
 ENV PORT=3000
+
+# Expose the port that the development server runs on
+EXPOSE $PORT
+
+# Health check to ensure the application is running
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:$PORT || exit 1
 
 # Default command - run the development server
 # Note: In a container environment, we run the renderer dev server

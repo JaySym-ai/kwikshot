@@ -5,10 +5,10 @@
 IMAGE_NAME = kwikshot
 CONTAINER_NAME = kwikshot-container
 DOCKERFILE = Dockerfile
-PORT = 3000
-# Allow user to override the host port via environment variable or command line
-# Usage: make start HOST_PORT=8080 or HOST_PORT=8080 make start
-HOST_PORT ?= 3000
+# Allow user to override both container and host ports via environment variables
+# Usage: make start HOST_PORT=8080 PORT=4546 or PORT=4546 HOST_PORT=4545 make start
+PORT ?= 3000
+HOST_PORT ?= $(PORT)
 
 # Default target
 .DEFAULT_GOAL := help
@@ -50,6 +50,7 @@ start:
 		docker run -d \
 			--name $(CONTAINER_NAME) \
 			-p $(HOST_PORT):$(PORT) \
+			-e PORT=$(PORT) \
 			$(IMAGE_NAME); \
 		echo "✅ Container $(CONTAINER_NAME) created and started successfully!"; \
 	fi
