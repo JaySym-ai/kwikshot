@@ -56,6 +56,53 @@
     @apply bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg border border-blue-500/50 cursor-pointer hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105;
   }
 
+  /* Enhanced Timeline Styles */
+  .video-clip {
+    @apply relative overflow-hidden shadow-lg hover:shadow-xl transition-all duration-200;
+  }
+
+  .audio-clip {
+    @apply relative overflow-hidden shadow-lg hover:shadow-xl transition-all duration-200;
+  }
+
+  .playhead {
+    @apply pointer-events-none;
+  }
+
+  .playhead-handle {
+    @apply pointer-events-auto;
+  }
+
+  .track-header {
+    @apply transition-all duration-200 hover:bg-gray-750;
+  }
+
+  .editing-tools {
+    @apply flex-shrink-0;
+  }
+
+  .properties-panel {
+    @apply flex-shrink-0;
+  }
+
+  /* Waveform Styles */
+  .waveform-container {
+    @apply absolute inset-0 overflow-hidden;
+  }
+
+  .waveform-bar {
+    @apply bg-green-400 opacity-70 transition-all duration-100;
+  }
+
+  /* Drag and Drop Styles */
+  .drag-over {
+    @apply bg-blue-500/20 border-blue-500;
+  }
+
+  .drop-indicator {
+    @apply absolute bg-blue-500 w-0.5 z-20 animate-pulse;
+  }
+
   .recording-indicator {
     @apply w-3 h-3 bg-red-500 rounded-full animate-pulse shadow-lg shadow-red-500/50;
   }
