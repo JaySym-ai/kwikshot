@@ -74,41 +74,73 @@ export const RecordingControls: React.FC<RecordingControlsProps> = ({
   const canStartRecording = !isRecording && !isProcessing && settings.selectedSource;
 
   return (
-    <div className="card p-6">
-      <h2 className="text-lg font-semibold mb-4">Recording Controls</h2>
-      
-      {/* Status Display */}
+    <div className="recording-card">
       <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-4">
-          {/* Recording Indicator */}
-          {isRecording && !isPaused && (
-            <div className="recording-indicator"></div>
-          )}
-          
-          {/* Processing Indicator */}
-          {isProcessing && (
-            <Loader2 size={16} className="text-yellow-400 animate-spin" />
-          )}
-          
-          {/* Duration */}
-          <span className="text-2xl font-mono font-bold">
-            {formatDuration(duration)}
-          </span>
-          
-          {/* Status Text */}
-          <span className={`text-sm font-medium ${getStatusColor()}`}>
-            {getStatusText()}
-          </span>
+        <h2 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+          Recording Controls
+        </h2>
+
+        {/* Status Badge */}
+        <div className={`status-indicator ${
+          isRecording && !isPaused ? 'status-recording' :
+          isPaused ? 'status-paused' :
+          isProcessing ? 'status-processing' :
+          'status-ready'
+        }`}>
+          {isRecording && !isPaused && <div className="recording-indicator mr-2" />}
+          {isProcessing && <Loader2 size={14} className="animate-spin mr-2" />}
+          <span className="font-medium">{getStatusText()}</span>
         </div>
+      </div>
+
+      {/* Main Status Display */}
+      <div className="text-center mb-8">
+        {/* Duration Display */}
+        <motion.div
+          className="text-5xl font-mono font-bold text-white mb-3"
+          animate={isRecording && !isPaused ? {
+            scale: [1, 1.02, 1],
+            textShadow: [
+              '0 0 0 rgba(59, 130, 246, 0)',
+              '0 0 30px rgba(59, 130, 246, 0.6)',
+              '0 0 0 rgba(59, 130, 246, 0)'
+            ]
+          } : {}}
+          transition={{ duration: 2, repeat: Infinity }}
+        >
+          {formatDuration(duration)}
+        </motion.div>
 
         {/* Recording Info */}
         {isRecording && (
-          <div className="text-sm text-gray-400">
-            <div>{settings.quality} • {settings.frameRate}fps</div>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center justify-center space-x-6 text-sm text-gray-400"
+          >
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+              <span>{settings.quality.resolution} @ {settings.quality.frameRate}fps</span>
+            </div>
             {settings.includeSystemAudio && (
-              <div className="text-xs">System audio included</div>
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                <span>System Audio</span>
+              </div>
             )}
-          </div>
+            {settings.includeMicrophone && (
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-red-400 rounded-full"></div>
+                <span>Microphone</span>
+              </div>
+            )}
+            {settings.cameraEnabled && (
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
+                <span>Camera</span>
+              </div>
+            )}
+          </motion.div>
         )}
       </div>
 
@@ -125,52 +157,83 @@ export const RecordingControls: React.FC<RecordingControlsProps> = ({
       )}
 
       {/* Control Buttons */}
-      <div className="flex items-center space-x-4">
+      <div className="recording-controls">
         {!isRecording ? (
           <motion.button
             onClick={handleStartClick}
             disabled={!canStartRecording || isProcessing}
-            className={`btn-primary flex items-center space-x-2 px-6 py-3 ${
-              !canStartRecording || isProcessing 
-                ? 'opacity-50 cursor-not-allowed' 
+            className={`recording-button-start ${
+              !canStartRecording || isProcessing
+                ? 'opacity-50 cursor-not-allowed'
                 : ''
             }`}
-            whileHover={canStartRecording && !isProcessing ? { scale: 1.05 } : {}}
+            whileHover={canStartRecording && !isProcessing ? {
+              scale: 1.1,
+              boxShadow: '0 0 40px rgba(34, 197, 94, 0.6)'
+            } : {}}
             whileTap={canStartRecording && !isProcessing ? { scale: 0.95 } : {}}
           >
             {isProcessing ? (
-              <Loader2 size={20} className="animate-spin" />
+              <Loader2 size={24} className="animate-spin" />
             ) : (
-              <Play size={20} />
+              <Play size={24} fill="currentColor" />
             )}
-            <span>
-              {isProcessing ? 'Starting...' : 'Start Recording'}
-            </span>
           </motion.button>
         ) : (
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-6">
             <motion.button
               onClick={handlePauseClick}
               disabled={isProcessing}
-              className="btn-secondary flex items-center space-x-2 px-4 py-3"
-              whileHover={{ scale: 1.05 }}
+              className="recording-button-pause"
+              whileHover={{
+                scale: 1.1,
+                boxShadow: '0 0 40px rgba(234, 179, 8, 0.6)'
+              }}
               whileTap={{ scale: 0.95 }}
             >
-              <Pause size={20} />
-              <span>{isPaused ? 'Resume' : 'Pause'}</span>
+              {isPaused ? (
+                <Play size={24} fill="currentColor" />
+              ) : (
+                <Pause size={24} fill="currentColor" />
+              )}
             </motion.button>
-            
+
             <motion.button
               onClick={onStopRecording}
               disabled={isProcessing}
-              className="btn-danger flex items-center space-x-2 px-4 py-3"
-              whileHover={{ scale: 1.05 }}
+              className="recording-button-stop"
+              whileHover={{
+                scale: 1.1,
+                boxShadow: '0 0 40px rgba(239, 68, 68, 0.6)'
+              }}
               whileTap={{ scale: 0.95 }}
             >
-              <Square size={20} />
-              <span>Stop & Save</span>
+              <Square size={24} fill="currentColor" />
             </motion.button>
           </div>
+        )}
+      </div>
+
+      {/* Action Labels */}
+      <div className="text-center mt-4">
+        {!isRecording ? (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-sm text-gray-400"
+          >
+            {isProcessing ? 'Initializing recording...' : 'Click to start recording'}
+          </motion.p>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex items-center justify-center space-x-8 text-sm text-gray-400"
+          >
+            <span>{isPaused ? 'Resume' : 'Pause'}</span>
+            <span>•</span>
+            <span>Stop & Save</span>
+          </motion.div>
         )}
       </div>
 

@@ -3,9 +3,16 @@ import { motion } from 'framer-motion';
 import { AlertTriangle, CheckCircle, Play, Square, Pause, Monitor, Camera, Mic, Radio } from 'lucide-react';
 import { useRecordingStore } from '../../stores/recordingStore';
 import { ScreenRecordingService } from '../../services/ScreenRecordingService';
+import { MediaDeviceService } from '../../services/MediaDeviceService';
+import { HotkeyService } from '../../services/HotkeyService';
+import { FileManager } from '../../services/FileManager';
 import { RecordingControls } from './RecordingControls';
 import { SourceSelector } from './SourceSelector';
+import { CameraSelector } from './CameraSelector';
+import { AudioDeviceSelector } from './AudioDeviceSelector';
 import { RecordingSettings } from './RecordingSettings';
+import { RecordingPreview } from './RecordingPreview';
+import { RecordingTimer } from './RecordingTimer';
 import { RecordingTest } from './RecordingTest';
 
 interface RecorderProps {
@@ -21,6 +28,9 @@ export const Recorder: React.FC<RecorderProps> = ({ onSwitchToEditor, onSwitchTo
     duration,
     recordedBlob,
     settings,
+    availableCameras,
+    availableMicrophones,
+    availableSpeakers,
     setRecording,
     setPaused,
     setProcessing,
@@ -29,22 +39,79 @@ export const Recorder: React.FC<RecorderProps> = ({ onSwitchToEditor, onSwitchTo
     setRecordedBlob,
     setMediaRecorder,
     setMediaStream,
+    setCameraStream,
+    setPreviewStream,
+    setAvailableCameras,
+    setAvailableMicrophones,
+    setAvailableSpeakers,
     setError,
+    addWarning,
     reset,
   } = useRecordingStore();
 
   const recordingServiceRef = useRef<ScreenRecordingService | null>(null);
+  const mediaDeviceServiceRef = useRef<MediaDeviceService>(MediaDeviceService.getInstance());
+  const hotkeyServiceRef = useRef<HotkeyService>(HotkeyService.getInstance());
+  const fileManagerRef = useRef<FileManager>(FileManager.getInstance());
   const durationIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Initialize recording service
+  // Initialize services
   useEffect(() => {
-    recordingServiceRef.current = new ScreenRecordingService();
+    const initializeServices = async () => {
+      try {
+        // Initialize recording service
+        recordingServiceRef.current = new ScreenRecordingService();
 
-    // Check capabilities on mount
-    const capabilities = ScreenRecordingService.getCapabilities();
-    if (!capabilities.supportsDisplayMedia) {
-      setError('Screen recording is not supported in this browser');
-    }
+        // Check capabilities on mount
+        const capabilities = ScreenRecordingService.getCapabilities();
+        if (!capabilities.supportsDisplayMedia) {
+          setError('Screen recording is not supported in this browser');
+        }
+
+        // Initialize hotkey service
+        await hotkeyServiceRef.current.initialize();
+
+        // Register recording hotkeys
+        hotkeyServiceRef.current.registerAction({
+          id: 'startRecording',
+          name: 'Start Recording',
+          description: 'Begin a new screen recording session',
+          defaultShortcut: 'Cmd+Shift+R',
+          callback: handleStartRecording,
+        });
+
+        hotkeyServiceRef.current.registerAction({
+          id: 'stopRecording',
+          name: 'Stop Recording',
+          description: 'End the current recording session',
+          defaultShortcut: 'Cmd+Shift+S',
+          callback: handleStopRecording,
+        });
+
+        hotkeyServiceRef.current.registerAction({
+          id: 'pauseRecording',
+          name: 'Pause/Resume Recording',
+          description: 'Pause or resume the current recording',
+          defaultShortcut: 'Cmd+Shift+P',
+          callback: () => {
+            if (isPaused) {
+              handleResumeRecording();
+            } else {
+              handlePauseRecording();
+            }
+          },
+        });
+
+        // Load media devices
+        await loadMediaDevices();
+
+      } catch (error) {
+        console.error('Failed to initialize services:', error);
+        addWarning('Some features may not be available');
+      }
+    };
+
+    initializeServices();
 
     return () => {
       if (recordingServiceRef.current) {
@@ -53,8 +120,9 @@ export const Recorder: React.FC<RecorderProps> = ({ onSwitchToEditor, onSwitchTo
       if (durationIntervalRef.current) {
         clearInterval(durationIntervalRef.current);
       }
+      hotkeyServiceRef.current.cleanup();
     };
-  }, [setError]);
+  }, [setError, addWarning]);
 
   // Duration timer
   useEffect(() => {
@@ -76,6 +144,19 @@ export const Recorder: React.FC<RecorderProps> = ({ onSwitchToEditor, onSwitchTo
     };
   }, [isRecording, isPaused, incrementDuration]);
 
+  // Load media devices
+  const loadMediaDevices = async () => {
+    try {
+      const { cameras, microphones, speakers } = await mediaDeviceServiceRef.current.getAllDevices();
+      setAvailableCameras(cameras);
+      setAvailableMicrophones(microphones);
+      setAvailableSpeakers(speakers);
+    } catch (error) {
+      console.error('Failed to load media devices:', error);
+      addWarning('Failed to load media devices');
+    }
+  };
+
   // Recording handlers
   const handleStartRecording = async (): Promise<void> => {
     if (!recordingServiceRef.current || !settings.selectedSource) {
@@ -87,23 +168,46 @@ export const Recorder: React.FC<RecorderProps> = ({ onSwitchToEditor, onSwitchTo
       setProcessing(true);
       setError(null);
 
-      // Get display media stream
-      const mediaStream = await recordingServiceRef.current.getDisplayMedia(settings);
-      setMediaStream(mediaStream);
+      // Get multi-source streams (display + camera + microphone)
+      const streams = await recordingServiceRef.current.getMultiSourceStreams(settings);
 
-      // Start recording
-      await recordingServiceRef.current.startRecording(mediaStream, settings, {
+      setMediaStream(streams.combinedStream);
+      setCameraStream(streams.cameraStream || null);
+      setPreviewStream(streams.displayStream);
+
+      // Start recording with combined stream
+      await recordingServiceRef.current.startRecording(streams.combinedStream, settings, {
         onDataAvailable: (blob) => {
           // Handle data chunks if needed
         },
-        onStop: (blob) => {
+        onStop: async (blob) => {
           setRecordedBlob(blob);
-          setProcessing(false);
+          setProcessing(true);
 
-          // Auto-switch to editor after recording
-          setTimeout(() => {
-            onSwitchToEditor();
-          }, 1000);
+          try {
+            // Save recording to file
+            const recordingFile = await fileManagerRef.current.saveRecording(
+              blob,
+              settings,
+              duration,
+              {
+                generateThumbnail: true,
+                autoOpen: false,
+              }
+            );
+
+            console.log('Recording saved:', recordingFile);
+
+            // Auto-switch to editor after recording
+            setTimeout(() => {
+              onSwitchToEditor();
+            }, 1000);
+          } catch (saveError) {
+            console.error('Failed to save recording:', saveError);
+            addWarning('Recording completed but failed to save to file');
+          } finally {
+            setProcessing(false);
+          }
         },
         onError: (error) => {
           setError(error.message);
@@ -176,6 +280,9 @@ export const Recorder: React.FC<RecorderProps> = ({ onSwitchToEditor, onSwitchTo
       <div className="flex-1 p-6 overflow-auto custom-scrollbar">
         <div className="max-w-4xl mx-auto space-y-8">
 
+          {/* Recording Timer */}
+          <RecordingTimer />
+
           {/* Recording Controls */}
           <RecordingControls
             onStartRecording={handleStartRecording}
@@ -183,6 +290,9 @@ export const Recorder: React.FC<RecorderProps> = ({ onSwitchToEditor, onSwitchTo
             onPauseRecording={handlePauseRecording}
             onResumeRecording={handleResumeRecording}
           />
+
+          {/* Recording Preview */}
+          <RecordingPreview />
 
           {/* Go Live Button */}
           {onSwitchToStreaming && !isRecording && (
@@ -201,6 +311,12 @@ export const Recorder: React.FC<RecorderProps> = ({ onSwitchToEditor, onSwitchTo
 
           {/* Source Selection */}
           <SourceSelector />
+
+          {/* Camera Selection */}
+          <CameraSelector />
+
+          {/* Audio Device Selection */}
+          <AudioDeviceSelector />
 
           {/* Recording Settings */}
           <RecordingSettings />
