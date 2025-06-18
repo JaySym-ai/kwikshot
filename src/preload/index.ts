@@ -29,6 +29,38 @@ export interface ElectronAPI {
   resumeStream?: () => Promise<void>;
   getStreamMetrics?: () => Promise<StreamMetrics>;
 
+  // Enhanced streaming
+  authenticatePlatform?: (platform: string, config: any) => Promise<void>;
+  getStreamKey?: (platform: string) => Promise<string>;
+  setRecordingConfig?: (config: any) => Promise<void>;
+  startRecording?: () => Promise<void>;
+  stopRecording?: () => Promise<void>;
+  getNetworkStats?: () => Promise<any>;
+  getHardwareCapabilities?: () => Promise<any>;
+
+  // Scene management
+  getScenes?: () => Promise<any[]>;
+  createScene?: (name: string) => Promise<any>;
+  deleteScene?: (sceneId: string) => Promise<boolean>;
+  switchScene?: (sceneId: string, transition?: any) => Promise<void>;
+  renameScene?: (sceneId: string, newName: string) => Promise<boolean>;
+  duplicateScene?: (sceneId: string) => Promise<any>;
+  addSourceToScene?: (sceneId: string, source: any) => Promise<any>;
+  removeSourceFromScene?: (sceneId: string, sourceId: string) => Promise<boolean>;
+  updateSource?: (sceneId: string, sourceId: string, updates: any) => Promise<boolean>;
+
+  // Audio mixer
+  getMixerState?: () => Promise<any>;
+  addAudioSource?: (source: any) => Promise<any>;
+  removeAudioSource?: (sourceId: string) => Promise<boolean>;
+  updateAudioSource?: (sourceId: string, updates: any) => Promise<boolean>;
+  setMasterVolume?: (volume: number) => Promise<void>;
+  setMasterMute?: (muted: boolean) => Promise<void>;
+  setMonitoring?: (enabled: boolean) => Promise<void>;
+  addAudioFilter?: (sourceId: string, filter: any) => Promise<any>;
+  removeAudioFilter?: (sourceId: string, filterId: string) => Promise<boolean>;
+  getAudioLevels?: () => Promise<any>;
+
   // Streaming events
   onStreamMetricsUpdate?: (callback: (metrics: StreamMetrics) => void) => void;
   onStreamError?: (callback: (error: string) => void) => void;
@@ -64,6 +96,49 @@ const electronAPI: ElectronAPI = {
   pauseStream: () => ipcRenderer.invoke('pause-stream'),
   resumeStream: () => ipcRenderer.invoke('resume-stream'),
   getStreamMetrics: () => ipcRenderer.invoke('get-stream-metrics'),
+
+  // Enhanced streaming
+  authenticatePlatform: (platform: string, config: any) =>
+    ipcRenderer.invoke('authenticate-platform', platform, config),
+  getStreamKey: (platform: string) =>
+    ipcRenderer.invoke('get-stream-key', platform),
+  setRecordingConfig: (config: any) =>
+    ipcRenderer.invoke('set-recording-config', config),
+  startRecording: () => ipcRenderer.invoke('start-recording'),
+  stopRecording: () => ipcRenderer.invoke('stop-recording'),
+  getNetworkStats: () => ipcRenderer.invoke('get-network-stats'),
+  getHardwareCapabilities: () => ipcRenderer.invoke('get-hardware-capabilities'),
+
+  // Scene management
+  getScenes: () => ipcRenderer.invoke('get-scenes'),
+  createScene: (name: string) => ipcRenderer.invoke('create-scene', name),
+  deleteScene: (sceneId: string) => ipcRenderer.invoke('delete-scene', sceneId),
+  switchScene: (sceneId: string, transition?: any) =>
+    ipcRenderer.invoke('switch-scene', sceneId, transition),
+  renameScene: (sceneId: string, newName: string) =>
+    ipcRenderer.invoke('rename-scene', sceneId, newName),
+  duplicateScene: (sceneId: string) => ipcRenderer.invoke('duplicate-scene', sceneId),
+  addSourceToScene: (sceneId: string, source: any) =>
+    ipcRenderer.invoke('add-source-to-scene', sceneId, source),
+  removeSourceFromScene: (sceneId: string, sourceId: string) =>
+    ipcRenderer.invoke('remove-source-from-scene', sceneId, sourceId),
+  updateSource: (sceneId: string, sourceId: string, updates: any) =>
+    ipcRenderer.invoke('update-source', sceneId, sourceId, updates),
+
+  // Audio mixer
+  getMixerState: () => ipcRenderer.invoke('get-mixer-state'),
+  addAudioSource: (source: any) => ipcRenderer.invoke('add-audio-source', source),
+  removeAudioSource: (sourceId: string) => ipcRenderer.invoke('remove-audio-source', sourceId),
+  updateAudioSource: (sourceId: string, updates: any) =>
+    ipcRenderer.invoke('update-audio-source', sourceId, updates),
+  setMasterVolume: (volume: number) => ipcRenderer.invoke('set-master-volume', volume),
+  setMasterMute: (muted: boolean) => ipcRenderer.invoke('set-master-mute', muted),
+  setMonitoring: (enabled: boolean) => ipcRenderer.invoke('set-monitoring', enabled),
+  addAudioFilter: (sourceId: string, filter: any) =>
+    ipcRenderer.invoke('add-audio-filter', sourceId, filter),
+  removeAudioFilter: (sourceId: string, filterId: string) =>
+    ipcRenderer.invoke('remove-audio-filter', sourceId, filterId),
+  getAudioLevels: () => ipcRenderer.invoke('get-audio-levels'),
 
   // Streaming events
   onStreamMetricsUpdate: (callback: (metrics: StreamMetrics) => void) => {

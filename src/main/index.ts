@@ -275,6 +275,81 @@ class KwikShotApp {
       }
     });
 
+    // Enhanced streaming handlers
+    ipcMain.handle('authenticate-platform', async (_, platform, config) => {
+      try {
+        if (!this.streamManager) {
+          throw new Error('Stream manager not initialized');
+        }
+        await this.streamManager.authenticatePlatform(platform, config);
+      } catch (error) {
+        console.error('Failed to authenticate platform:', error);
+        throw error;
+      }
+    });
+
+    ipcMain.handle('get-stream-key', async (_, platform) => {
+      try {
+        if (!this.streamManager) {
+          throw new Error('Stream manager not initialized');
+        }
+        return await this.streamManager.getStreamKey(platform);
+      } catch (error) {
+        console.error('Failed to get stream key:', error);
+        throw error;
+      }
+    });
+
+    ipcMain.handle('set-recording-config', async (_, config) => {
+      try {
+        if (!this.streamManager) {
+          throw new Error('Stream manager not initialized');
+        }
+        this.streamManager.setRecordingConfig(config);
+      } catch (error) {
+        console.error('Failed to set recording config:', error);
+        throw error;
+      }
+    });
+
+    ipcMain.handle('start-recording', async () => {
+      try {
+        if (!this.streamManager) {
+          throw new Error('Stream manager not initialized');
+        }
+        await this.streamManager.startRecording();
+      } catch (error) {
+        console.error('Failed to start recording:', error);
+        throw error;
+      }
+    });
+
+    ipcMain.handle('stop-recording', async () => {
+      try {
+        if (!this.streamManager) {
+          throw new Error('Stream manager not initialized');
+        }
+        await this.streamManager.stopRecording();
+      } catch (error) {
+        console.error('Failed to stop recording:', error);
+        throw error;
+      }
+    });
+
+    ipcMain.handle('get-network-stats', () => {
+      if (!this.streamManager) {
+        throw new Error('Stream manager not initialized');
+      }
+      return this.streamManager.getNetworkStats();
+    });
+
+    ipcMain.handle('get-hardware-capabilities', async () => {
+      if (!this.streamManager) {
+        throw new Error('Stream manager not initialized');
+      }
+      return await this.streamManager.getHardwareCapabilities();
+    });
+
     ipcMain.handle('start-webrtc-stream', async (_, config, settings) => {
       try {
         if (!this.streamManager) {
@@ -328,6 +403,141 @@ class KwikShotApp {
         throw new Error('Stream manager not initialized');
       }
       return this.streamManager.getMetrics();
+    });
+
+    // Scene management handlers
+    ipcMain.handle('get-scenes', () => {
+      if (!this.streamManager) {
+        throw new Error('Stream manager not initialized');
+      }
+      return this.streamManager.getSceneManager().getScenes();
+    });
+
+    ipcMain.handle('create-scene', (_, name) => {
+      if (!this.streamManager) {
+        throw new Error('Stream manager not initialized');
+      }
+      return this.streamManager.getSceneManager().createScene(name);
+    });
+
+    ipcMain.handle('delete-scene', (_, sceneId) => {
+      if (!this.streamManager) {
+        throw new Error('Stream manager not initialized');
+      }
+      return this.streamManager.getSceneManager().deleteScene(sceneId);
+    });
+
+    ipcMain.handle('switch-scene', async (_, sceneId, transition) => {
+      if (!this.streamManager) {
+        throw new Error('Stream manager not initialized');
+      }
+      await this.streamManager.getSceneManager().switchToScene(sceneId, transition);
+    });
+
+    ipcMain.handle('rename-scene', (_, sceneId, newName) => {
+      if (!this.streamManager) {
+        throw new Error('Stream manager not initialized');
+      }
+      return this.streamManager.getSceneManager().renameScene(sceneId, newName);
+    });
+
+    ipcMain.handle('duplicate-scene', (_, sceneId) => {
+      if (!this.streamManager) {
+        throw new Error('Stream manager not initialized');
+      }
+      return this.streamManager.getSceneManager().duplicateScene(sceneId);
+    });
+
+    ipcMain.handle('add-source-to-scene', (_, sceneId, source) => {
+      if (!this.streamManager) {
+        throw new Error('Stream manager not initialized');
+      }
+      return this.streamManager.getSceneManager().addSourceToScene(sceneId, source);
+    });
+
+    ipcMain.handle('remove-source-from-scene', (_, sceneId, sourceId) => {
+      if (!this.streamManager) {
+        throw new Error('Stream manager not initialized');
+      }
+      return this.streamManager.getSceneManager().removeSourceFromScene(sceneId, sourceId);
+    });
+
+    ipcMain.handle('update-source', (_, sceneId, sourceId, updates) => {
+      if (!this.streamManager) {
+        throw new Error('Stream manager not initialized');
+      }
+      return this.streamManager.getSceneManager().updateSource(sceneId, sourceId, updates);
+    });
+
+    // Audio mixer handlers
+    ipcMain.handle('get-mixer-state', () => {
+      if (!this.streamManager) {
+        throw new Error('Stream manager not initialized');
+      }
+      return this.streamManager.getAudioMixer().getMixerState();
+    });
+
+    ipcMain.handle('add-audio-source', (_, source) => {
+      if (!this.streamManager) {
+        throw new Error('Stream manager not initialized');
+      }
+      return this.streamManager.getAudioMixer().addAudioSource(source);
+    });
+
+    ipcMain.handle('remove-audio-source', (_, sourceId) => {
+      if (!this.streamManager) {
+        throw new Error('Stream manager not initialized');
+      }
+      return this.streamManager.getAudioMixer().removeAudioSource(sourceId);
+    });
+
+    ipcMain.handle('update-audio-source', (_, sourceId, updates) => {
+      if (!this.streamManager) {
+        throw new Error('Stream manager not initialized');
+      }
+      return this.streamManager.getAudioMixer().updateAudioSource(sourceId, updates);
+    });
+
+    ipcMain.handle('set-master-volume', (_, volume) => {
+      if (!this.streamManager) {
+        throw new Error('Stream manager not initialized');
+      }
+      this.streamManager.getAudioMixer().setMasterVolume(volume);
+    });
+
+    ipcMain.handle('set-master-mute', (_, muted) => {
+      if (!this.streamManager) {
+        throw new Error('Stream manager not initialized');
+      }
+      this.streamManager.getAudioMixer().setMasterMute(muted);
+    });
+
+    ipcMain.handle('set-monitoring', (_, enabled) => {
+      if (!this.streamManager) {
+        throw new Error('Stream manager not initialized');
+      }
+      this.streamManager.getAudioMixer().setMonitoring(enabled);
+    });
+
+    ipcMain.handle('add-audio-filter', (_, sourceId, filter) => {
+      if (!this.streamManager) {
+        throw new Error('Stream manager not initialized');
+      }
+      return this.streamManager.getAudioMixer().addFilter(sourceId, filter);
+    });
+
+    ipcMain.handle('remove-audio-filter', (_, sourceId, filterId) => {
+      if (!this.streamManager) {
+        throw new Error('Stream manager not initialized');
+      }
+      return this.streamManager.getAudioMixer().removeFilter(sourceId, filterId);
+    });
+
+    ipcMain.handle('get-audio-levels', () => {
+      if (!this.streamManager) {
+        throw new Error('Stream manager not initialized');
+      }
+      return this.streamManager.getAudioMixer().getAudioLevels();
     });
   }
 }
