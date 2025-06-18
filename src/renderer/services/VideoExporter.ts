@@ -2,6 +2,9 @@
 // Built using AugmentCode tool - www.augmentcode.com
 
 import { VideoProject, ExportSettings, RenderJob } from '../types/videoEditorTypes';
+import CompressionService from './CompressionService';
+import ExportService from './ExportService';
+import FileUtils from '../utils/fileUtils';
 
 export interface ExportProgress {
   progress: number; // 0-100
@@ -14,6 +17,13 @@ export interface ExportProgress {
 export class VideoExporter {
   private activeJobs: Map<string, RenderJob> = new Map();
   private progressCallbacks: Map<string, (progress: ExportProgress) => void> = new Map();
+  private compressionService: CompressionService;
+  private exportService: ExportService;
+
+  constructor() {
+    this.compressionService = CompressionService.getInstance();
+    this.exportService = ExportService.getInstance();
+  }
 
   /**
    * Start video export
@@ -312,6 +322,121 @@ export class VideoExporter {
       { value: 'webm', label: 'WebM (VP9)', extension: '.webm' },
       { value: 'avi', label: 'AVI', extension: '.avi' }
     ];
+  }
+
+  /**
+   * Export project metadata with compression
+   */
+  async exportProjectMetadata(
+    project: VideoProject,
+    options: {
+      filename?: string;
+      compress?: boolean;
+      format?: 'json' | 'csv' | 'pdf';
+    } = {}
+  ): Promise<{ success: boolean; filename: string; size: string; error?: string }> {
+    try {
+      const metadata = {
+        project: {
+          name: project.name,
+          duration: project.settings.duration,
+          resolution: `${project.settings.width}x${project.settings.height}`,
+          frameRate: project.settings.frameRate,
+          createdAt: project.createdAt,
+          modifiedAt: project.modifiedAt,
+        },
+        timeline: {
+          tracks: project.timeline.tracks.length,
+          clips: project.timeline.tracks.reduce((total, track) => total + track.clips.length, 0),
+        },
+        assets: project.assets.map(asset => ({
+          id: asset.id,
+          name: asset.name,
+          type: asset.type,
+          duration: asset.duration,
+          size: FileUtils.formatFileSize(asset.fileSize || 0).formatted,
+        })),
+        exportSettings: project.exportSettings,
+        statistics: {
+          totalAssets: project.assets.length,
+          totalDuration: project.settings.duration,
+          estimatedFileSize: this.estimateOutputSize(project),
+        },
+      };
+
+      const filename = options.filename || `${project.name}_metadata`;
+      const format = options.format || 'json';
+      const compress = options.compress !== false;
+
+      let result;
+      switch (format) {
+        case 'csv':
+          // Flatten metadata for CSV export
+          const csvData = [
+            { property: 'Project Name', value: metadata.project.name },
+            { property: 'Duration', value: `${metadata.project.duration}s` },
+            { property: 'Resolution', value: metadata.project.resolution },
+            { property: 'Frame Rate', value: `${metadata.project.frameRate} fps` },
+            { property: 'Total Tracks', value: metadata.timeline.tracks },
+            { property: 'Total Clips', value: metadata.timeline.clips },
+            { property: 'Total Assets', value: metadata.statistics.totalAssets },
+            { property: 'Estimated Output Size', value: metadata.statistics.estimatedFileSize },
+          ];
+          result = await this.exportService.exportCSV(csvData, {
+            filename: `${filename}.csv`,
+            compress,
+            includeMetadata: true,
+          });
+          break;
+
+        case 'pdf':
+          result = await this.exportService.exportPDF(metadata, {
+            filename: `${filename}.pdf`,
+            title: `${project.name} - Project Metadata`,
+            author: 'KwikShot Video Editor',
+            subject: 'Video Project Metadata Export',
+            includeMetadata: true,
+          });
+          break;
+
+        default:
+          result = await this.exportService.exportJSON(metadata, {
+            filename: `${filename}.json`,
+            compress,
+            includeMetadata: true,
+          });
+      }
+
+      return {
+        success: result.success,
+        filename: result.filename,
+        size: FileUtils.formatFileSize(result.finalSize).formatted,
+        error: result.error,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        filename: 'metadata_export_failed',
+        size: '0 B',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  }
+
+  /**
+   * Estimate output file size based on project settings
+   */
+  private estimateOutputSize(project: VideoProject): string {
+    const duration = project.settings.duration;
+    const width = project.settings.width;
+    const height = project.settings.height;
+    const frameRate = project.settings.frameRate;
+    const bitrate = project.exportSettings?.bitrate || 5000; // Default 5 Mbps
+
+    // Rough estimation: (bitrate in kbps * duration in seconds) / 8 / 1024 = MB
+    const estimatedMB = (bitrate * duration) / 8 / 1024;
+
+    return FileUtils.formatFileSize(estimatedMB * 1024 * 1024).formatted;
   }
 
   /**
