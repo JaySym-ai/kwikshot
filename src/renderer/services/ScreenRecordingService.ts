@@ -1,4 +1,5 @@
-import { RecordingSettings } from '../stores/recordingStore';
+import { RecordingSettings, RecordingQualitySettings } from '../stores/recordingStore';
+import { MediaDeviceService } from './MediaDeviceService';
 
 export interface RecordingCapabilities {
   supportsDisplayMedia: boolean;
@@ -6,13 +7,27 @@ export interface RecordingCapabilities {
   supportedMimeTypes: string[];
 }
 
+export interface MultiSourceStreams {
+  displayStream: MediaStream;
+  cameraStream?: MediaStream;
+  microphoneStream?: MediaStream;
+  combinedStream: MediaStream;
+}
+
 export class ScreenRecordingService {
   private mediaRecorder: MediaRecorder | null = null;
   private mediaStream: MediaStream | null = null;
+  private cameraStream: MediaStream | null = null;
+  private microphoneStream: MediaStream | null = null;
   private recordedChunks: Blob[] = [];
   private onDataAvailable?: (blob: Blob) => void;
   private onStop?: (blob: Blob) => void;
   private onError?: (error: Error) => void;
+  private mediaDeviceService: MediaDeviceService;
+
+  constructor() {
+    this.mediaDeviceService = MediaDeviceService.getInstance();
+  }
 
   /**
    * Get the preferred MIME type for recording (prioritizes MP4)
@@ -63,6 +78,78 @@ export class ScreenRecordingService {
   }
 
   /**
+   * Get multi-source media streams (display + camera + microphone)
+   */
+  async getMultiSourceStreams(settings: RecordingSettings): Promise<MultiSourceStreams> {
+    const displayStream = await this.getDisplayMedia(settings);
+    let cameraStream: MediaStream | undefined;
+    let microphoneStream: MediaStream | undefined;
+
+    // Get camera stream if enabled
+    if (settings.cameraEnabled && settings.selectedCamera) {
+      try {
+        cameraStream = await this.mediaDeviceService.getCameraStream(
+          settings.selectedCamera.deviceId,
+          {
+            video: {
+              deviceId: { exact: settings.selectedCamera.deviceId },
+              width: this.getCameraConstraints(settings.cameraSize).width,
+              height: this.getCameraConstraints(settings.cameraSize).height,
+              frameRate: { ideal: settings.quality.frameRate },
+            }
+          }
+        );
+      } catch (error) {
+        console.warn('Failed to get camera stream:', error);
+      }
+    }
+
+    // Get microphone stream if enabled
+    if (settings.includeMicrophone && settings.selectedMicrophone) {
+      try {
+        microphoneStream = await this.mediaDeviceService.getMicrophoneStream(
+          settings.selectedMicrophone.deviceId,
+          {
+            audio: {
+              deviceId: { exact: settings.selectedMicrophone.deviceId },
+              sampleRate: settings.quality.audioSampleRate,
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true,
+            }
+          }
+        );
+      } catch (error) {
+        console.warn('Failed to get microphone stream:', error);
+      }
+    }
+
+    // Combine all streams
+    const combinedTracks: MediaStreamTrack[] = [
+      ...displayStream.getVideoTracks(),
+    ];
+
+    // Add system audio if available
+    if (settings.includeSystemAudio) {
+      combinedTracks.push(...displayStream.getAudioTracks());
+    }
+
+    // Add microphone audio if available
+    if (microphoneStream) {
+      combinedTracks.push(...microphoneStream.getAudioTracks());
+    }
+
+    const combinedStream = new MediaStream(combinedTracks);
+
+    return {
+      displayStream,
+      cameraStream,
+      microphoneStream,
+      combinedStream,
+    };
+  }
+
+  /**
    * Get display media stream with specified settings
    */
   async getDisplayMedia(settings: RecordingSettings): Promise<MediaStream> {
@@ -70,11 +157,17 @@ export class ScreenRecordingService {
       throw new Error('Screen recording is not supported in this browser');
     }
 
+    const videoConstraints = this.getVideoConstraints(settings.quality.resolution);
     const constraints: MediaStreamConstraints & { video: any } = {
       video: {
-        width: this.getVideoConstraints(settings.quality).width,
-        height: this.getVideoConstraints(settings.quality).height,
-        frameRate: settings.frameRate,
+        width: settings.quality.resolution === 'custom' && settings.quality.customWidth
+          ? settings.quality.customWidth
+          : videoConstraints.width,
+        height: settings.quality.resolution === 'custom' && settings.quality.customHeight
+          ? settings.quality.customHeight
+          : videoConstraints.height,
+        frameRate: settings.quality.frameRate,
+        cursor: settings.showCursor ? 'always' : 'never',
       },
       audio: settings.includeSystemAudio,
     };
@@ -147,7 +240,8 @@ export class ScreenRecordingService {
     const mimeType = ScreenRecordingService.getPreferredMimeType() || capabilities.supportedMimeTypes[0];
     const options: MediaRecorderOptions = {
       mimeType,
-      videoBitsPerSecond: this.getVideoBitrate(settings.quality),
+      videoBitsPerSecond: settings.quality.videoBitrate * 1000, // Convert kbps to bps
+      audioBitsPerSecond: settings.quality.audioBitrate * 1000, // Convert kbps to bps
     };
 
     try {
@@ -219,9 +313,20 @@ export class ScreenRecordingService {
       this.mediaRecorder.stop();
     }
 
+    // Stop all streams
     if (this.mediaStream) {
       this.mediaStream.getTracks().forEach(track => track.stop());
       this.mediaStream = null;
+    }
+
+    if (this.cameraStream) {
+      this.cameraStream.getTracks().forEach(track => track.stop());
+      this.cameraStream = null;
+    }
+
+    if (this.microphoneStream) {
+      this.microphoneStream.getTracks().forEach(track => track.stop());
+      this.microphoneStream = null;
     }
   }
 
@@ -242,6 +347,22 @@ export class ScreenRecordingService {
     this.onDataAvailable = undefined;
     this.onStop = undefined;
     this.onError = undefined;
+  }
+
+  /**
+   * Get camera constraints based on size setting
+   */
+  private getCameraConstraints(size: 'small' | 'medium' | 'large') {
+    switch (size) {
+      case 'small':
+        return { width: 320, height: 240 };
+      case 'medium':
+        return { width: 640, height: 480 };
+      case 'large':
+        return { width: 1280, height: 720 };
+      default:
+        return { width: 640, height: 480 };
+    }
   }
 
   private getVideoConstraints(quality: string) {

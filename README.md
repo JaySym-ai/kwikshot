@@ -39,6 +39,15 @@
 - **Transcription-Based Editing**: Edit your video by simply editing the text transcript
 - **Speed Ramping**: Automatically adjust playback speed for optimal pacing and engagement
 
+### 🎥 **Advanced Recording Capabilities**
+- **Multi-Source Recording**: Simultaneous screen, webcam, and microphone capture with perfect synchronization
+- **Professional Quality**: 720p to 4K resolution with custom bitrate control (1-50 Mbps)
+- **High Frame Rates**: 15fps to 120fps for smooth motion or high-performance recording
+- **Real-time Preview**: Live preview with camera overlay and recording statistics
+- **Smart Audio**: Individual gain controls for system audio and microphone with level monitoring
+- **Camera Integration**: Picture-in-picture webcam with customizable positioning and sizing
+- **Recording Behavior**: Cursor visibility, click highlighting, and auto-stop timers
+
 ### 🎵 **AI Audio Enhancement**
 - **Studio-Quality Processing**: Professional-grade noise reduction and audio enhancement
 - **Intelligent Noise Removal**: AI-powered background noise elimination
@@ -76,18 +85,32 @@
 - **Stream Monitoring**: Real-time metrics including bitrate, FPS, and connection status
 - **Platform Presets**: Optimized settings for YouTube, Instagram, TikTok, LinkedIn
 
-### 🎨 **Modern Professional Interface**
-- **Dark Theme Design**: Professional, eye-friendly interface with smooth animations
-- **Responsive Layout**: Adaptive design that works perfectly on any screen size
+### 🎨 **Modern Interface & UX**
+- **Glass Morphism Design**: Beautiful dark UI with backdrop blur effects and modern aesthetics
+- **Smooth Animations**: Framer Motion powered micro-interactions and seamless transitions
+- **Responsive Design**: Adaptive layout optimized for all screen sizes and resolutions
+- **Global Hotkeys**: System-wide shortcuts for recording control (Cmd/Ctrl+Shift+R/S/P)
+- **Real-time Feedback**: Live recording statistics, memory usage, and performance monitoring
+- **Device Management**: Automatic detection and testing of cameras and microphones
+- **Professional Controls**: Intuitive recording controls with visual status indicators
 - **Customizable Workspace**: Resizable panels and dockable windows for your workflow
 - **Comprehensive Shortcuts**: Full keyboard navigation and hotkey system for power users
-- **Real-time Feedback**: Visual indicators for all operations and processing states
 
 ### ⚡ **Performance & Quality**
 - **Cross-Platform**: Native performance on Windows, macOS, and Linux
 - **Hardware Acceleration**: GPU-accelerated processing for smooth real-time editing
 - **Memory Optimization**: Efficient handling of large video files and long recordings
 - **Auto-Updates**: Seamless background updates with new AI features and improvements
+
+### 🚀 **Latest Features (v2.0)**
+- **Advanced Recording Engine**: Complete multi-source recording with professional controls
+- **Real-time Statistics**: Live monitoring of file size, frame rate, memory usage, and recording quality
+- **Smart Device Management**: Automatic camera and microphone detection with testing capabilities
+- **Professional Preview**: Picture-in-picture camera overlay with customizable positioning
+- **Modern UI Components**: Glass morphism design with smooth animations and micro-interactions
+- **Global Hotkey System**: System-wide shortcuts that work even when the app is minimized
+- **Intelligent File Management**: Automatic saving with thumbnails and recording history
+- **Performance Monitoring**: Real-time memory usage and performance optimization
 
 ---
 
@@ -267,16 +290,19 @@ make build && make start
 5. **Edit Your Video** - Switch to the editor to trim and enhance
 6. **Export** - Save your final video in your preferred format
 
-### Keyboard Shortcuts
+### Global Keyboard Shortcuts
 
-| Action | Shortcut |
-|--------|----------|
-| Start/Stop Recording | `Ctrl/Cmd + R` |
-| Pause Recording | `Ctrl/Cmd + P` |
-| Switch to Editor | `Ctrl/Cmd + E` |
-| Export Video | `Ctrl/Cmd + S` |
-| Play/Pause | `Space` |
-| Go Live | `Ctrl/Cmd + L` |
+| Action | Windows/Linux | macOS | Description |
+|--------|---------------|-------|-------------|
+| Start Recording | `Ctrl + Shift + R` | `Cmd + Shift + R` | Begin a new recording session |
+| Stop Recording | `Ctrl + Shift + S` | `Cmd + Shift + S` | End current recording and save |
+| Pause/Resume Recording | `Ctrl + Shift + P` | `Cmd + Shift + P` | Toggle recording pause state |
+| Toggle Preview | `Ctrl + Shift + V` | `Cmd + Shift + V` | Show/hide recording preview |
+| Open Settings | `Ctrl + ,` | `Cmd + ,` | Open application settings |
+| Take Screenshot | `Ctrl + Shift + 4` | `Cmd + Shift + 4` | Capture screenshot |
+| Toggle Fullscreen | `F11` | `Cmd + Ctrl + F` | Enter/exit fullscreen mode |
+
+*Note: Global hotkeys work system-wide, even when KwikShot is minimized*
 
 ---
 
@@ -677,6 +703,7 @@ AugmentCode empowers developers to build better software faster through AI-assis
 - [x] **Cross-Platform Support**: Windows, macOS, and Linux build targets
 - [x] **Docker Development**: Complete Docker setup with Makefile for easy development
 
+<<<<<<< HEAD
 ### ✅ AI-Powered Video Editor (Phase 2) - **NEW!**
 - [x] **Professional Timeline Editor**: Multi-track timeline with frame-accurate editing
 - [x] **Video Preview Player**: Hardware-accelerated player with playback controls
@@ -711,6 +738,18 @@ AugmentCode empowers developers to build better software faster through AI-assis
 - [ ] **Real-time Preview**: Live preview of recording content
 - [ ] **Global Hotkey Support**: System-wide hotkeys for recording control
 - [ ] **Recording State Management**: Robust state management for recording sessions
+=======
+### ✅ Core Recording Implementation (Phase 2) - COMPLETED
+- [x] **Screen Capture API Integration**: Native screen capture with comprehensive permission handling
+- [x] **Multi-Source Recording**: Simultaneous screen, webcam, and microphone recording with perfect sync
+- [x] **Recording Controls**: Professional start/stop/pause/resume with real-time visual feedback
+- [x] **Source Selection UI**: Advanced interface for selecting screens, windows, cameras, and microphones
+- [x] **Recording Quality Settings**: Complete resolution (720p-4K+custom), frame rate (15-120fps), and bitrate configuration
+- [x] **File Output Management**: Automatic recording file saving, intelligent naming, and organized storage
+- [x] **Real-time Preview**: Live preview with camera overlay, fullscreen support, and recording statistics
+- [x] **Global Hotkey Support**: System-wide hotkeys for all recording controls with platform-aware mapping
+- [x] **Recording State Management**: Comprehensive Zustand-based state management with statistics tracking
+>>>>>>> 575bfc9 (feat: Implement advanced screen recording with modern UI)
 
 ### 📡 Live Streaming Enhancement (Phase 4)
 - [ ] **Platform Integration**: Complete YouTube, Twitch, Facebook Live authentication
@@ -791,11 +830,16 @@ AugmentCode empowers developers to build better software faster through AI-assis
 
 ### 📊 Project Progress Overview
 
+<<<<<<< HEAD
 **Overall Completion: ~75%** (AI-Powered Video Editor Complete!)
+=======
+**Overall Completion: ~65%** (Core Recording Complete!)
+>>>>>>> 575bfc9 (feat: Implement advanced screen recording with modern UI)
 
 | Phase | Status | Progress | Priority |
 |-------|--------|----------|----------|
 | ✅ Foundation | Complete | 100% | ✅ Done |
+<<<<<<< HEAD
 | ✅ AI Video Editor | Complete | 100% | ✅ Done |
 | ✅ AI Features | Complete | 100% | ✅ Done |
 | 🚧 Core Recording | Not Started | 0% | 🔥 High |
@@ -803,11 +847,20 @@ AugmentCode empowers developers to build better software faster through AI-assis
 | 🎨 UI/UX Polish | Partial | 60% | 🟡 Medium |
 | ⚙️ Settings | Partial | 20% | 🟡 Medium |
 | 🧪 Testing | Not Started | 0% | 🟢 Low |
+=======
+| ✅ Core Recording | Complete | 100% | ✅ Done |
+| ✂️ Video Editor | Not Started | 0% | 🔥 High |
+| 📡 Streaming Enhancement | Partial | 30% | 🟡 Medium |
+| ✅ UI/UX Polish | Complete | 95% | ✅ Done |
+| ✅ Settings | Complete | 90% | ✅ Done |
+| 🧪 Testing | Not Started | 0% | 🟡 Medium |
+>>>>>>> 575bfc9 (feat: Implement advanced screen recording with modern UI)
 | 📦 Distribution | Partial | 40% | 🟢 Low |
 | 🚀 Future AI | Planning | 0% | 🔵 Future |
 
 ### 🎯 Immediate Next Steps (Priority Order)
 
+<<<<<<< HEAD
 1. **🚧 Screen Capture Implementation** - Integrate native screen recording with the AI editor
 2. **🎥 Recording Controls** - Connect recording interface with the video editor
 3. **📁 File Management** - Implement seamless recording-to-editing workflow
@@ -825,6 +878,13 @@ AugmentCode empowers developers to build better software faster through AI-assis
 ✅ **Advanced Editing Tools** - Razor, trim, slip, slide, ripple, and roll tools
 ✅ **Waveform Visualization** - Real-time audio waveforms for precise editing
 ✅ **Export System** - Multiple formats with platform-specific presets
+=======
+1. **✂️ Video Editor Implementation** - Build the timeline-based video editor
+2. **🎬 Export System** - Implement video rendering and format conversion
+3. **📡 Streaming Enhancement** - Complete platform authentication and optimization
+4. **🧪 Testing Framework** - Add comprehensive testing for recording features
+5. **📦 Distribution** - Prepare for production release with code signing
+>>>>>>> 575bfc9 (feat: Implement advanced screen recording with modern UI)
 
 ### 📅 Development Timeline Estimate
 

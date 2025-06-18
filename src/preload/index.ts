@@ -65,6 +65,13 @@ export interface ElectronAPI {
   onStreamMetricsUpdate?: (callback: (metrics: StreamMetrics) => void) => void;
   onStreamError?: (callback: (error: string) => void) => void;
   onStreamStatusChange?: (callback: (status: string) => void) => void;
+
+  // Global hotkeys
+  registerGlobalShortcut: (accelerator: string, action: string) => Promise<{ success: boolean; error?: string }>;
+  unregisterGlobalShortcut: (action: string) => Promise<{ success: boolean; error?: string }>;
+  unregisterAllShortcuts: () => Promise<{ success: boolean; error?: string }>;
+  isShortcutRegistered: (accelerator: string) => Promise<{ registered: boolean; error?: string }>;
+  onGlobalShortcutTriggered: (callback: (action: string) => void) => void;
 }
 
 // Expose the API to the renderer process
@@ -149,6 +156,19 @@ const electronAPI: ElectronAPI = {
   },
   onStreamStatusChange: (callback: (status: string) => void) => {
     ipcRenderer.on('stream-status-change', (_, status) => callback(status));
+  },
+
+  // Global hotkeys
+  registerGlobalShortcut: (accelerator: string, action: string) =>
+    ipcRenderer.invoke('register-global-shortcut', accelerator, action),
+  unregisterGlobalShortcut: (action: string) =>
+    ipcRenderer.invoke('unregister-global-shortcut', action),
+  unregisterAllShortcuts: () =>
+    ipcRenderer.invoke('unregister-all-shortcuts'),
+  isShortcutRegistered: (accelerator: string) =>
+    ipcRenderer.invoke('is-shortcut-registered', accelerator),
+  onGlobalShortcutTriggered: (callback: (action: string) => void) => {
+    ipcRenderer.on('global-shortcut-triggered', (_, action) => callback(action));
   }
 };
 

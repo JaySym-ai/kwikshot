@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, desktopCapturer, systemPreferences, session, dialog, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, desktopCapturer, systemPreferences, session, dialog, shell, globalShortcut } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -9,6 +9,7 @@ import { StreamManager } from './streaming/stream-manager';
 class KwikShotApp {
   private mainWindow: BrowserWindow | null = null;
   private streamManager: StreamManager | null = null;
+  private registeredShortcuts: Map<string, string> = new Map();
 
   constructor() {
     this.initializeApp();
@@ -538,6 +539,62 @@ class KwikShotApp {
         throw new Error('Stream manager not initialized');
       }
       return this.streamManager.getAudioMixer().getAudioLevels();
+    });
+
+    // Global hotkey handlers
+    ipcMain.handle('register-global-shortcut', async (_, accelerator: string, action: string) => {
+      try {
+        // Unregister existing shortcut for this action
+        const existingAccelerator = this.registeredShortcuts.get(action);
+        if (existingAccelerator) {
+          globalShortcut.unregister(existingAccelerator);
+        }
+
+        // Register new shortcut
+        const success = globalShortcut.register(accelerator, () => {
+          this.mainWindow?.webContents.send('global-shortcut-triggered', action);
+        });
+
+        if (success) {
+          this.registeredShortcuts.set(action, accelerator);
+          return { success: true };
+        } else {
+          return { success: false, error: 'Failed to register shortcut' };
+        }
+      } catch (error) {
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      }
+    });
+
+    ipcMain.handle('unregister-global-shortcut', async (_, action: string) => {
+      try {
+        const accelerator = this.registeredShortcuts.get(action);
+        if (accelerator) {
+          globalShortcut.unregister(accelerator);
+          this.registeredShortcuts.delete(action);
+        }
+        return { success: true };
+      } catch (error) {
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      }
+    });
+
+    ipcMain.handle('unregister-all-shortcuts', async () => {
+      try {
+        globalShortcut.unregisterAll();
+        this.registeredShortcuts.clear();
+        return { success: true };
+      } catch (error) {
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      }
+    });
+
+    ipcMain.handle('is-shortcut-registered', async (_, accelerator: string) => {
+      try {
+        return { registered: globalShortcut.isRegistered(accelerator) };
+      } catch (error) {
+        return { registered: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      }
     });
   }
 }
