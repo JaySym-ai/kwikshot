@@ -77,11 +77,6 @@ export const RecordingSettings: React.FC = () => {
     { value: 120, label: '120 fps', description: 'High frame rate' },
   ] as const;
 
-  const frameRateOptions = [
-    { value: 30, label: '30 FPS', description: 'Standard' },
-    { value: 60, label: '60 FPS', description: 'Smooth motion' },
-  ] as const;
-
   return (
     <div className="card p-6">
       <div className="flex items-center space-x-2 mb-4">
