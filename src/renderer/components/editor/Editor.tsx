@@ -13,11 +13,16 @@ import {
   FileVideo,
   Music,
   Image,
-  Layers
+  Layers,
+  Grid3X3,
+  Mic,
+  Users
 } from 'lucide-react';
 import { useVideoEditorStore } from '../../stores/videoEditorStore';
 import { VideoPreview } from './preview/VideoPreview';
 import { Timeline } from './timeline/Timeline';
+import { MulticamTimeline } from './timeline/MulticamTimeline';
+import { PodcastMode } from './podcast/PodcastMode';
 import { EditingTools } from './tools/EditingTools';
 import { PropertiesPanel } from './properties/PropertiesPanel';
 import { AIPanel } from './ai/AIPanel';
@@ -30,10 +35,13 @@ interface EditorProps {
 export const Editor: React.FC<EditorProps> = ({ onSwitchToRecorder }) => {
   const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
   const [projectManager] = useState(() => new ProjectManager());
+  const [editorMode, setEditorMode] = useState<'standard' | 'multicam' | 'podcast'>('standard');
 
   const {
     currentProject,
     projectModified,
+    multicamGroups,
+    isPodcastModeActive,
     createNewProject,
     loadProject,
     saveProject,
@@ -42,6 +50,17 @@ export const Editor: React.FC<EditorProps> = ({ onSwitchToRecorder }) => {
     play,
     pause
   } = useVideoEditorStore();
+
+  // Determine editor mode based on project state
+  useEffect(() => {
+    if (isPodcastModeActive) {
+      setEditorMode('podcast');
+    } else if (multicamGroups.length > 0) {
+      setEditorMode('multicam');
+    } else {
+      setEditorMode('standard');
+    }
+  }, [isPodcastModeActive, multicamGroups.length]);
 
   // Handle keyboard shortcuts
   useEffect(() => {
@@ -135,6 +154,39 @@ export const Editor: React.FC<EditorProps> = ({ onSwitchToRecorder }) => {
           </div>
 
           <div className="flex items-center space-x-2">
+            {/* Editor Mode Selector */}
+            {currentProject && (
+              <div className="flex items-center space-x-1 mr-4">
+                <button
+                  onClick={() => setEditorMode('standard')}
+                  className={`btn-ghost text-sm px-3 py-1 ${
+                    editorMode === 'standard' ? 'bg-blue-600 text-white' : ''
+                  }`}
+                  title="Standard editing mode"
+                >
+                  <Layers size={14} />
+                </button>
+                <button
+                  onClick={() => setEditorMode('multicam')}
+                  className={`btn-ghost text-sm px-3 py-1 ${
+                    editorMode === 'multicam' ? 'bg-blue-600 text-white' : ''
+                  }`}
+                  title="Multicam editing mode"
+                >
+                  <Grid3X3 size={14} />
+                </button>
+                <button
+                  onClick={() => setEditorMode('podcast')}
+                  className={`btn-ghost text-sm px-3 py-1 ${
+                    editorMode === 'podcast' ? 'bg-blue-600 text-white' : ''
+                  }`}
+                  title="Podcast editing mode"
+                >
+                  <Mic size={14} />
+                </button>
+              </div>
+            )}
+
             {/* Project Actions */}
             <button
               onClick={() => setShowNewProjectDialog(true)}
@@ -193,28 +245,42 @@ export const Editor: React.FC<EditorProps> = ({ onSwitchToRecorder }) => {
 
       {/* Main Editor Layout */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Left Panel - AI Assistant */}
-        <div className="w-80 bg-gray-800 border-r border-gray-700">
-          <AIPanel />
-        </div>
-
-        {/* Center Panel - Preview & Timeline */}
-        <div className="flex-1 flex flex-col">
-          {/* Video Preview */}
+        {/* Conditional Layout based on Editor Mode */}
+        {editorMode === 'podcast' ? (
+          /* Podcast Mode Layout */
           <div className="flex-1">
-            <VideoPreview />
+            <PodcastMode />
           </div>
+        ) : (
+          <>
+            {/* Left Panel - AI Assistant */}
+            <div className="w-80 bg-gray-800 border-r border-gray-700">
+              <AIPanel />
+            </div>
 
-          {/* Timeline */}
-          <div className="h-64 border-t border-gray-700">
-            <Timeline />
-          </div>
-        </div>
+            {/* Center Panel - Preview & Timeline */}
+            <div className="flex-1 flex flex-col">
+              {/* Video Preview */}
+              <div className="flex-1">
+                <VideoPreview />
+              </div>
 
-        {/* Right Panel - Properties */}
-        <div className="w-80 border-l border-gray-700">
-          <PropertiesPanel />
-        </div>
+              {/* Timeline - Switch between standard and multicam */}
+              <div className="h-64 border-t border-gray-700">
+                {editorMode === 'multicam' ? (
+                  <MulticamTimeline />
+                ) : (
+                  <Timeline />
+                )}
+              </div>
+            </div>
+
+            {/* Right Panel - Properties */}
+            <div className="w-80 border-l border-gray-700">
+              <PropertiesPanel />
+            </div>
+          </>
+        )}
       </div>
 
       {/* New Project Dialog */}

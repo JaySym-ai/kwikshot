@@ -65,6 +65,11 @@ export interface Track {
   height: number;
   color: string;
   visible: boolean;
+  // Multicam properties
+  cameraAngle?: number;
+  syncOffset?: number;
+  isMulticamSource?: boolean;
+  multicamGroupId?: string;
 }
 
 export interface Transition {
@@ -128,6 +133,12 @@ export interface VideoProject {
     description?: string;
     tags?: string[];
   };
+  // Multiple timeline support
+  timelines?: Timeline[];
+  activeTimelineId?: string;
+  // Multicam support
+  multicamGroups?: MulticamGroup[];
+  podcastMode?: PodcastModeSettings;
 }
 
 export interface PlaybackState {
@@ -332,4 +343,89 @@ export interface AIProcessingJob {
   error?: string;
   startTime: number;
   endTime?: number;
+}
+
+// Multiple Timeline Types
+export interface Timeline {
+  id: string;
+  name: string;
+  tracks: Track[];
+  duration: number;
+  settings: ProjectSettings;
+  markers: Marker[];
+  created: Date;
+  modified: Date;
+}
+
+// Multicam Types
+export interface MulticamGroup {
+  id: string;
+  name: string;
+  tracks: string[]; // Track IDs that belong to this multicam group
+  syncPoints: SyncPoint[];
+  activeAngle: number;
+  angles: MulticamAngle[];
+}
+
+export interface MulticamAngle {
+  id: string;
+  name: string;
+  trackId: string;
+  cameraNumber: number;
+  color: string;
+  thumbnail?: string;
+}
+
+export interface SyncPoint {
+  id: string;
+  time: number;
+  trackOffsets: { [trackId: string]: number };
+  type: 'manual' | 'audio' | 'timecode';
+  confidence?: number;
+}
+
+// Podcast Mode Types
+export interface PodcastModeSettings {
+  enabled: boolean;
+  speakers: PodcastSpeaker[];
+  autoSwitchOnSpeaker: boolean;
+  switchTransitionDuration: number;
+  showSpeakerLabels: boolean;
+  quickSwitchKeys: { [key: string]: string }; // Key to track ID mapping
+}
+
+export interface PodcastSpeaker {
+  id: string;
+  name: string;
+  trackId: string;
+  color: string;
+  avatar?: string;
+  voiceProfile?: AudioProfile;
+}
+
+export interface AudioProfile {
+  frequencyRange: [number, number];
+  averageVolume: number;
+  voicePrint?: Float32Array;
+}
+
+// Camera Switching Types
+export interface CameraSwitchEvent {
+  id: string;
+  time: number;
+  fromAngle: number;
+  toAngle: number;
+  transitionType: 'cut' | 'fade' | 'dissolve';
+  transitionDuration: number;
+}
+
+export interface MulticamPreview {
+  angles: {
+    [angleId: string]: {
+      canvas: HTMLCanvasElement;
+      isActive: boolean;
+      lastUpdate: number;
+    };
+  };
+  mainPreview: HTMLCanvasElement;
 }

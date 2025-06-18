@@ -18,39 +18,62 @@ import {
   ProjectSettings,
   TranscriptionResult,
   AIProcessingJob,
-  SmartEditingOptions
+  SmartEditingOptions,
+  Timeline,
+  MulticamGroup,
+  MulticamAngle,
+  SyncPoint,
+  PodcastModeSettings,
+  CameraSwitchEvent,
+  MulticamPreview
 } from '../types/videoEditorTypes';
 
 interface VideoEditorState {
   // Project state
   currentProject: VideoProject | null;
   projectModified: boolean;
-  
+
+  // Multiple Timeline state
+  timelines: Timeline[];
+  activeTimelineId: string | null;
+
   // Playback state
   playback: PlaybackState;
-  
+
   // Timeline state
   viewport: TimelineViewport;
   selection: TimelineSelection;
   currentTool: EditingTool;
-  
+
+  // Multicam state
+  multicamGroups: MulticamGroup[];
+  activeMulticamGroup: string | null;
+  multicamPreview: MulticamPreview | null;
+  cameraSwitchEvents: CameraSwitchEvent[];
+
+  // Podcast mode state
+  podcastMode: PodcastModeSettings;
+  isPodcastModeActive: boolean;
+
   // UI state
   previewQuality: 'low' | 'medium' | 'high';
   showWaveforms: boolean;
   showThumbnails: boolean;
   snapToGrid: boolean;
   gridSize: number;
-  
+  showMulticamPreview: boolean;
+  multicamPreviewLayout: 'grid' | 'sidebar' | 'overlay';
+
   // Undo/Redo system
   history: UndoRedoAction[];
   historyIndex: number;
   maxHistorySize: number;
-  
+
   // Rendering state
   renderJobs: RenderJob[];
   isExporting: boolean;
   exportProgress: number;
-  
+
   // Error handling
   errors: string[];
   warnings: string[];
@@ -143,6 +166,40 @@ interface VideoEditorState {
   updateAIJob: (jobId: string, updates: Partial<AIProcessingJob>) => void;
   removeAIJob: (jobId: string) => void;
   setSmartEditingOptions: (options: SmartEditingOptions) => void;
+
+  // Actions - Multiple Timeline Management
+  createTimeline: (name: string, settings?: ProjectSettings) => string;
+  removeTimeline: (timelineId: string) => void;
+  switchTimeline: (timelineId: string) => void;
+  updateTimeline: (timelineId: string, updates: Partial<Timeline>) => void;
+  duplicateTimeline: (timelineId: string, newName: string) => string;
+
+  // Actions - Multicam Management
+  createMulticamGroup: (name: string, trackIds: string[]) => string;
+  removeMulticamGroup: (groupId: string) => void;
+  addTrackToMulticamGroup: (groupId: string, trackId: string, angle: number) => void;
+  removeTrackFromMulticamGroup: (groupId: string, trackId: string) => void;
+  switchMulticamAngle: (groupId: string, angle: number, time?: number) => void;
+  addSyncPoint: (groupId: string, time: number, trackOffsets: { [trackId: string]: number }) => void;
+  autoSyncMulticam: (groupId: string) => Promise<void>;
+
+  // Actions - Podcast Mode
+  enablePodcastMode: (settings: PodcastModeSettings) => void;
+  disablePodcastMode: () => void;
+  addPodcastSpeaker: (speaker: Omit<PodcastSpeaker, 'id'>) => string;
+  removePodcastSpeaker: (speakerId: string) => void;
+  switchToSpeaker: (speakerId: string, time?: number) => void;
+  setQuickSwitchKey: (key: string, trackId: string) => void;
+
+  // Actions - Camera Switching
+  addCameraSwitchEvent: (time: number, fromAngle: number, toAngle: number, transitionType?: 'cut' | 'fade' | 'dissolve') => void;
+  removeCameraSwitchEvent: (eventId: string) => void;
+  updateCameraSwitchEvent: (eventId: string, updates: Partial<CameraSwitchEvent>) => void;
+
+  // Actions - Multicam Preview
+  toggleMulticamPreview: () => void;
+  setMulticamPreviewLayout: (layout: 'grid' | 'sidebar' | 'overlay') => void;
+  updateMulticamPreview: (preview: MulticamPreview) => void;
 }
 
 const defaultProjectSettings: ProjectSettings = {
@@ -179,11 +236,35 @@ const defaultTool: EditingTool = {
   cursor: 'default'
 };
 
+const defaultPodcastMode: PodcastModeSettings = {
+  enabled: false,
+  speakers: [],
+  autoSwitchOnSpeaker: false,
+  switchTransitionDuration: 0.5,
+  showSpeakerLabels: true,
+  quickSwitchKeys: {}
+};
+
 export const useVideoEditorStore = create<VideoEditorState>()(
   subscribeWithSelector((set, get) => ({
     // Initial state
     currentProject: null,
     projectModified: false,
+
+    // Multiple Timeline state
+    timelines: [],
+    activeTimelineId: null,
+
+    // Multicam state
+    multicamGroups: [],
+    activeMulticamGroup: null,
+    multicamPreview: null,
+    cameraSwitchEvents: [],
+
+    // Podcast mode state
+    podcastMode: defaultPodcastMode,
+    isPodcastModeActive: false,
+
     playback: defaultPlaybackState,
     viewport: defaultViewport,
     selection: defaultSelection,
@@ -193,6 +274,8 @@ export const useVideoEditorStore = create<VideoEditorState>()(
     showThumbnails: true,
     snapToGrid: true,
     gridSize: 1,
+    showMulticamPreview: false,
+    multicamPreviewLayout: 'grid',
     history: [],
     historyIndex: -1,
     maxHistorySize: 100,
@@ -720,6 +803,383 @@ export const useVideoEditorStore = create<VideoEditorState>()(
       aiJobs: state.aiJobs.filter(job => job.id !== jobId)
     })),
 
-    setSmartEditingOptions: (options) => set({ smartEditingOptions: options })
+    setSmartEditingOptions: (options) => set({ smartEditingOptions: options }),
+
+    // Multiple Timeline Management Actions
+    createTimeline: (name, settings) => {
+      const timelineId = crypto.randomUUID();
+      const newTimeline: Timeline = {
+        id: timelineId,
+        name,
+        tracks: [],
+        duration: 0,
+        settings: settings || defaultProjectSettings,
+        markers: [],
+        created: new Date(),
+        modified: new Date()
+      };
+
+      set((state) => ({
+        timelines: [...state.timelines, newTimeline],
+        activeTimelineId: state.activeTimelineId || timelineId,
+        projectModified: true
+      }));
+
+      return timelineId;
+    },
+
+    removeTimeline: (timelineId) => {
+      set((state) => ({
+        timelines: state.timelines.filter(timeline => timeline.id !== timelineId),
+        activeTimelineId: state.activeTimelineId === timelineId
+          ? (state.timelines.length > 1 ? state.timelines[0].id : null)
+          : state.activeTimelineId,
+        projectModified: true
+      }));
+    },
+
+    switchTimeline: (timelineId) => {
+      const { timelines } = get();
+      const timeline = timelines.find(t => t.id === timelineId);
+      if (!timeline) return;
+
+      set((state) => ({
+        activeTimelineId: timelineId,
+        // Update current project tracks to match the active timeline
+        currentProject: state.currentProject ? {
+          ...state.currentProject,
+          tracks: timeline.tracks
+        } : null
+      }));
+    },
+
+    updateTimeline: (timelineId, updates) => {
+      set((state) => ({
+        timelines: state.timelines.map(timeline =>
+          timeline.id === timelineId
+            ? { ...timeline, ...updates, modified: new Date() }
+            : timeline
+        ),
+        projectModified: true
+      }));
+    },
+
+    duplicateTimeline: (timelineId, newName) => {
+      const { timelines } = get();
+      const originalTimeline = timelines.find(t => t.id === timelineId);
+      if (!originalTimeline) return '';
+
+      const newTimelineId = crypto.randomUUID();
+      const duplicatedTimeline: Timeline = {
+        ...originalTimeline,
+        id: newTimelineId,
+        name: newName,
+        created: new Date(),
+        modified: new Date(),
+        tracks: originalTimeline.tracks.map(track => ({
+          ...track,
+          id: crypto.randomUUID(),
+          clips: track.clips.map(clip => ({
+            ...clip,
+            id: crypto.randomUUID()
+          }))
+        }))
+      };
+
+      set((state) => ({
+        timelines: [...state.timelines, duplicatedTimeline],
+        projectModified: true
+      }));
+
+      return newTimelineId;
+    },
+
+    // Multicam Management Actions
+    createMulticamGroup: (name, trackIds) => {
+      const groupId = crypto.randomUUID();
+      const newGroup: MulticamGroup = {
+        id: groupId,
+        name,
+        tracks: trackIds,
+        syncPoints: [],
+        activeAngle: 0,
+        angles: trackIds.map((trackId, index) => ({
+          id: crypto.randomUUID(),
+          name: `Angle ${index + 1}`,
+          trackId,
+          cameraNumber: index + 1,
+          color: `hsl(${(index * 60) % 360}, 70%, 50%)`
+        }))
+      };
+
+      // Update tracks to mark them as multicam sources
+      set((state) => ({
+        multicamGroups: [...state.multicamGroups, newGroup],
+        currentProject: state.currentProject ? {
+          ...state.currentProject,
+          tracks: state.currentProject.tracks.map(track =>
+            trackIds.includes(track.id)
+              ? {
+                  ...track,
+                  isMulticamSource: true,
+                  multicamGroupId: groupId,
+                  cameraAngle: trackIds.indexOf(track.id)
+                }
+              : track
+          )
+        } : null,
+        activeMulticamGroup: state.activeMulticamGroup || groupId,
+        projectModified: true
+      }));
+
+      return groupId;
+    },
+
+    removeMulticamGroup: (groupId) => {
+      set((state) => ({
+        multicamGroups: state.multicamGroups.filter(group => group.id !== groupId),
+        currentProject: state.currentProject ? {
+          ...state.currentProject,
+          tracks: state.currentProject.tracks.map(track =>
+            track.multicamGroupId === groupId
+              ? {
+                  ...track,
+                  isMulticamSource: false,
+                  multicamGroupId: undefined,
+                  cameraAngle: undefined
+                }
+              : track
+          )
+        } : null,
+        activeMulticamGroup: state.activeMulticamGroup === groupId ? null : state.activeMulticamGroup,
+        projectModified: true
+      }));
+    },
+
+    addTrackToMulticamGroup: (groupId, trackId, angle) => {
+      set((state) => ({
+        multicamGroups: state.multicamGroups.map(group =>
+          group.id === groupId ? {
+            ...group,
+            tracks: [...group.tracks, trackId],
+            angles: [...group.angles, {
+              id: crypto.randomUUID(),
+              name: `Angle ${angle + 1}`,
+              trackId,
+              cameraNumber: angle + 1,
+              color: `hsl(${(angle * 60) % 360}, 70%, 50%)`
+            }]
+          } : group
+        ),
+        currentProject: state.currentProject ? {
+          ...state.currentProject,
+          tracks: state.currentProject.tracks.map(track =>
+            track.id === trackId
+              ? {
+                  ...track,
+                  isMulticamSource: true,
+                  multicamGroupId: groupId,
+                  cameraAngle: angle
+                }
+              : track
+          )
+        } : null,
+        projectModified: true
+      }));
+    },
+
+    removeTrackFromMulticamGroup: (groupId, trackId) => {
+      set((state) => ({
+        multicamGroups: state.multicamGroups.map(group =>
+          group.id === groupId ? {
+            ...group,
+            tracks: group.tracks.filter(id => id !== trackId),
+            angles: group.angles.filter(angle => angle.trackId !== trackId)
+          } : group
+        ),
+        currentProject: state.currentProject ? {
+          ...state.currentProject,
+          tracks: state.currentProject.tracks.map(track =>
+            track.id === trackId
+              ? {
+                  ...track,
+                  isMulticamSource: false,
+                  multicamGroupId: undefined,
+                  cameraAngle: undefined
+                }
+              : track
+          )
+        } : null,
+        projectModified: true
+      }));
+    },
+
+    switchMulticamAngle: (groupId, angle, time) => {
+      const currentTime = time || get().playback.currentTime;
+
+      set((state) => ({
+        multicamGroups: state.multicamGroups.map(group =>
+          group.id === groupId ? { ...group, activeAngle: angle } : group
+        ),
+        cameraSwitchEvents: [...state.cameraSwitchEvents, {
+          id: crypto.randomUUID(),
+          time: currentTime,
+          fromAngle: state.multicamGroups.find(g => g.id === groupId)?.activeAngle || 0,
+          toAngle: angle,
+          transitionType: 'cut',
+          transitionDuration: 0
+        }],
+        projectModified: true
+      }));
+    },
+
+    addSyncPoint: (groupId, time, trackOffsets) => {
+      const syncPoint: SyncPoint = {
+        id: crypto.randomUUID(),
+        time,
+        trackOffsets,
+        type: 'manual'
+      };
+
+      set((state) => ({
+        multicamGroups: state.multicamGroups.map(group =>
+          group.id === groupId ? {
+            ...group,
+            syncPoints: [...group.syncPoints, syncPoint].sort((a, b) => a.time - b.time)
+          } : group
+        ),
+        projectModified: true
+      }));
+    },
+
+    autoSyncMulticam: async (groupId) => {
+      // TODO: Implement automatic audio-based synchronization
+      // This would analyze audio waveforms to find sync points
+      console.log('Auto-sync multicam group:', groupId);
+    },
+
+    // Podcast Mode Actions
+    enablePodcastMode: (settings) => {
+      set({
+        podcastMode: settings,
+        isPodcastModeActive: true,
+        projectModified: true
+      });
+    },
+
+    disablePodcastMode: () => {
+      set((state) => ({
+        podcastMode: { ...state.podcastMode, enabled: false },
+        isPodcastModeActive: false,
+        projectModified: true
+      }));
+    },
+
+    addPodcastSpeaker: (speaker) => {
+      const speakerId = crypto.randomUUID();
+      const newSpeaker: PodcastSpeaker = {
+        ...speaker,
+        id: speakerId
+      };
+
+      set((state) => ({
+        podcastMode: {
+          ...state.podcastMode,
+          speakers: [...state.podcastMode.speakers, newSpeaker]
+        },
+        projectModified: true
+      }));
+
+      return speakerId;
+    },
+
+    removePodcastSpeaker: (speakerId) => {
+      set((state) => ({
+        podcastMode: {
+          ...state.podcastMode,
+          speakers: state.podcastMode.speakers.filter(s => s.id !== speakerId)
+        },
+        projectModified: true
+      }));
+    },
+
+    switchToSpeaker: (speakerId, time) => {
+      const { podcastMode, playback } = get();
+      const speaker = podcastMode.speakers.find(s => s.id === speakerId);
+      if (!speaker) return;
+
+      const currentTime = time || playback.currentTime;
+
+      // Find the multicam group that contains this speaker's track
+      const { multicamGroups } = get();
+      const group = multicamGroups.find(g => g.tracks.includes(speaker.trackId));
+      if (group) {
+        const angle = group.angles.findIndex(a => a.trackId === speaker.trackId);
+        if (angle !== -1) {
+          get().switchMulticamAngle(group.id, angle, currentTime);
+        }
+      }
+    },
+
+    setQuickSwitchKey: (key, trackId) => {
+      set((state) => ({
+        podcastMode: {
+          ...state.podcastMode,
+          quickSwitchKeys: {
+            ...state.podcastMode.quickSwitchKeys,
+            [key]: trackId
+          }
+        },
+        projectModified: true
+      }));
+    },
+
+    // Camera Switching Actions
+    addCameraSwitchEvent: (time, fromAngle, toAngle, transitionType = 'cut') => {
+      const event: CameraSwitchEvent = {
+        id: crypto.randomUUID(),
+        time,
+        fromAngle,
+        toAngle,
+        transitionType,
+        transitionDuration: transitionType === 'cut' ? 0 : 0.5
+      };
+
+      set((state) => ({
+        cameraSwitchEvents: [...state.cameraSwitchEvents, event].sort((a, b) => a.time - b.time),
+        projectModified: true
+      }));
+    },
+
+    removeCameraSwitchEvent: (eventId) => {
+      set((state) => ({
+        cameraSwitchEvents: state.cameraSwitchEvents.filter(e => e.id !== eventId),
+        projectModified: true
+      }));
+    },
+
+    updateCameraSwitchEvent: (eventId, updates) => {
+      set((state) => ({
+        cameraSwitchEvents: state.cameraSwitchEvents.map(event =>
+          event.id === eventId ? { ...event, ...updates } : event
+        ),
+        projectModified: true
+      }));
+    },
+
+    // Multicam Preview Actions
+    toggleMulticamPreview: () => {
+      set((state) => ({
+        showMulticamPreview: !state.showMulticamPreview
+      }));
+    },
+
+    setMulticamPreviewLayout: (layout) => {
+      set({ multicamPreviewLayout: layout });
+    },
+
+    updateMulticamPreview: (preview) => {
+      set({ multicamPreview: preview });
+    }
   }))
 );
