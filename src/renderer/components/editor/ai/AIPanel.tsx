@@ -25,6 +25,7 @@ import { useVideoEditorStore } from '../../../stores/videoEditorStore';
 import { TranscriptionService, TranscriptionResult } from '../../../services/TranscriptionService';
 import { SmartEditingService, SmartEditResult } from '../../../services/SmartEditingService';
 import { AIAudioProcessor, SilenceSegment } from '../../../services/AIAudioProcessor';
+import ExportService from '../../../services/ExportService';
 
 interface AIPanelProps {
   className?: string;
@@ -484,14 +485,45 @@ export const AIPanel: React.FC<AIPanelProps> = ({ className = '' }) => {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')},${ms.toString().padStart(3, '0')}`;
   };
 
-  const downloadFile = (content: string, filename: string) => {
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
+  const downloadFile = async (content: string, filename: string) => {
+    try {
+      const exportService = ExportService.getInstance();
+
+      // Determine export format based on file extension
+      const extension = filename.split('.').pop()?.toLowerCase();
+      const format = extension === 'srt' ? 'txt' : 'txt';
+
+      // Export with compression for larger files
+      const result = await exportService.exportJSON(content, {
+        filename,
+        compress: content.length > 1024 * 10, // Compress if > 10KB
+        format: format as any,
+        includeMetadata: false,
+        autoDownload: true,
+      });
+
+      if (!result.success) {
+        console.error('Export failed:', result.error);
+        // Fallback to simple download
+        const blob = new Blob([content], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+      console.error('Export error:', error);
+      // Fallback to simple download
+      const blob = new Blob([content], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
   };
 
   return (
