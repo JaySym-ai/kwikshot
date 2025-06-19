@@ -15,6 +15,24 @@ export interface ChangelogEntry {
 
 export const changelogData: ChangelogEntry[] = [
   {
+    id: 'readme-cleanup-2025-06-19',
+    date: '2025-06-19',
+    version: '2.0.2',
+    type: 'improvement',
+    title: 'README Documentation Cleanup',
+    description: 'Fixed duplicate sections and merge conflicts in README documentation',
+    author: 'AugmentCode AI Assistant',
+    tags: ['documentation', 'readme', 'cleanup'],
+    changes: [
+      'Removed duplicate "Advanced Recording Capabilities" section',
+      'Cleaned up merge conflict markers throughout the document',
+      'Consolidated roadmap phases and progress tracking',
+      'Updated project status to reflect current completion state',
+      'Reorganized development timeline and priorities',
+      'Fixed inconsistent phase numbering and descriptions'
+    ]
+  },
+  {
     id: 'multicam-timeline-2025-01-18',
     date: '2025-01-18',
     version: '2.1.0',
