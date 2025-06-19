@@ -4,7 +4,10 @@ import {
   FolderOpen,
   Save,
   Download,
-  Plus
+  Plus,
+  Layers,
+  Grid3X3,
+  Mic
 } from 'lucide-react';
 
 interface EditorHeaderProps {
@@ -15,6 +18,8 @@ interface EditorHeaderProps {
   onSaveProject: () => void;
   onExportProject: () => void;
   onSwitchToRecorder: () => void;
+  editorMode?: 'standard' | 'multicam' | 'podcast';
+  onEditorModeChange?: (mode: 'standard' | 'multicam' | 'podcast') => void;
 }
 
 export const EditorHeader: React.FC<EditorHeaderProps> = ({
@@ -24,7 +29,9 @@ export const EditorHeader: React.FC<EditorHeaderProps> = ({
   onOpenProject,
   onSaveProject,
   onExportProject,
-  onSwitchToRecorder
+  onSwitchToRecorder,
+  editorMode = 'standard',
+  onEditorModeChange
 }) => {
   return (
     <div className="flex-shrink-0 p-4 border-b border-gray-700 bg-gray-800">
@@ -45,6 +52,39 @@ export const EditorHeader: React.FC<EditorHeaderProps> = ({
         </div>
 
         <div className="flex items-center space-x-2">
+          {/* Editor Mode Selector */}
+          {currentProject && onEditorModeChange && (
+            <div className="flex items-center space-x-1 mr-4">
+              <button
+                onClick={() => onEditorModeChange('standard')}
+                className={`btn-ghost text-sm px-3 py-1 ${
+                  editorMode === 'standard' ? 'bg-blue-600 text-white' : ''
+                }`}
+                title="Standard editing mode"
+              >
+                <Layers size={14} />
+              </button>
+              <button
+                onClick={() => onEditorModeChange('multicam')}
+                className={`btn-ghost text-sm px-3 py-1 ${
+                  editorMode === 'multicam' ? 'bg-blue-600 text-white' : ''
+                }`}
+                title="Multicam editing mode"
+              >
+                <Grid3X3 size={14} />
+              </button>
+              <button
+                onClick={() => onEditorModeChange('podcast')}
+                className={`btn-ghost text-sm px-3 py-1 ${
+                  editorMode === 'podcast' ? 'bg-blue-600 text-white' : ''
+                }`}
+                title="Podcast editing mode"
+              >
+                <Mic size={14} />
+              </button>
+            </div>
+          )}
+
           {/* Project Actions */}
           <button
             onClick={onNewProject}
