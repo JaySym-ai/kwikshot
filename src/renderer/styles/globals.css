@@ -282,7 +282,7 @@ input[type="range"]::-moz-range-thumb {
   }
 
   .track-header {
-    @apply transition-all duration-200 hover:bg-gray-750;
+    @apply transition-all duration-200 hover:bg-gray-700;
   }
 
   .editing-tools {
@@ -328,7 +328,7 @@ input[type="range"]::-moz-range-thumb {
   }
 
   .sidebar-item {
-    @apply relative overflow-hidden rounded-xl transition-all duration-300 hover:scale-105 active:scale-95 group;
+    @apply relative overflow-hidden rounded-xl transition-all duration-300 hover:scale-105 active:scale-95;
   }
 
   .sidebar-item-active {
@@ -340,7 +340,7 @@ input[type="range"]::-moz-range-thumb {
   }
 
   .sidebar-item::before {
-    @apply absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-out;
+    @apply absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] transition-transform duration-700 ease-out;
     content: '';
   }
 
@@ -392,7 +392,7 @@ input[type="range"]::-moz-range-thumb {
 
   /* Device Selection */
   .device-card {
-    @apply card-interactive p-4 hover:border-blue-500/50 group;
+    @apply card-interactive p-4 hover:border-blue-500/50;
   }
 
   .device-card-selected {
@@ -405,7 +405,7 @@ input[type="range"]::-moz-range-thumb {
 
   /* Quality Settings */
   .quality-option {
-    @apply p-4 rounded-xl border-2 transition-all duration-300 cursor-pointer hover:scale-[1.02] group;
+    @apply p-4 rounded-xl border-2 transition-all duration-300 cursor-pointer hover:scale-[1.02];
   }
 
   .quality-option-selected {

@@ -10,6 +10,7 @@ export interface ChangelogEntry {
   description: string;
   author?: string;
   tags?: string[];
+  changes?: string[]; // Support for both formats
 }
 
 export const changelogData: ChangelogEntry[] = [
@@ -120,6 +121,22 @@ The editor automatically switches modes based on project content and user prefer
 • Streamlined podcast editing controls`,
     author: 'AugmentCode AI Assistant',
     tags: ['components', 'ui', 'multicam', 'podcast', 'react']
+  },
+  {
+    id: 'refactoring-2025-06-18',
+    date: '2025-06-18',
+    version: '2.0.1',
+    type: 'improvement',
+    title: 'Component Refactoring and Code Organization',
+    description: 'Improved code maintainability and organization',
+    author: 'Development Team',
+    tags: ['refactoring', 'maintainability', 'components'],
+    changes: [
+      'Refactored large components into smaller, reusable components for better maintainability',
+      'Created custom hooks for tour management, recording logic, and streaming state',
+      'Extracted UI components for headers, dialogs, and status indicators',
+      'Improved code organization and separation of concerns'
+    ]
   }
 ];
 
@@ -143,9 +160,10 @@ export const getLatestChanges = (count: number = 10): ChangelogEntry[] => {
 
 export const searchChangelog = (query: string): ChangelogEntry[] => {
   const lowercaseQuery = query.toLowerCase();
-  return changelogData.filter(entry => 
-    entry.title.toLowerCase().includes(lowercaseQuery) ||
-    entry.description.toLowerCase().includes(lowercaseQuery) ||
-    entry.tags?.some(tag => tag.toLowerCase().includes(lowercaseQuery))
+  return changelogData.filter(entry =>
+    entry.title?.toLowerCase().includes(lowercaseQuery) ||
+    entry.description?.toLowerCase().includes(lowercaseQuery) ||
+    entry.tags?.some(tag => tag.toLowerCase().includes(lowercaseQuery)) ||
+    entry.changes?.some(change => change.toLowerCase().includes(lowercaseQuery))
   );
 };
