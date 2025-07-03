@@ -63,6 +63,7 @@ interface VideoEditorState {
   gridSize: number;
   showMulticamPreview: boolean;
   multicamPreviewLayout: 'grid' | 'sidebar' | 'overlay';
+  showNewProjectDialog: boolean;
 
   // Undo/Redo system
   history: UndoRedoAction[];
@@ -158,6 +159,7 @@ interface VideoEditorState {
   toggleThumbnails: () => void;
   toggleSnapToGrid: () => void;
   setGridSize: (size: number) => void;
+  setShowNewProjectDialog: (show: boolean) => void;
 
   // Actions - AI Processing
   addTranscriptionResult: (clipId: string, result: TranscriptionResult) => void;
@@ -276,6 +278,7 @@ export const useVideoEditorStore = create<VideoEditorState>()(
     gridSize: 1,
     showMulticamPreview: false,
     multicamPreviewLayout: 'grid',
+    showNewProjectDialog: false,
     history: [],
     historyIndex: -1,
     maxHistorySize: 100,
@@ -776,6 +779,7 @@ export const useVideoEditorStore = create<VideoEditorState>()(
     toggleThumbnails: () => set((state) => ({ showThumbnails: !state.showThumbnails })),
     toggleSnapToGrid: () => set((state) => ({ snapToGrid: !state.snapToGrid })),
     setGridSize: (size) => set({ gridSize: size }),
+    setShowNewProjectDialog: (show) => set({ showNewProjectDialog: show }),
 
     // AI Processing Actions
     addTranscriptionResult: (clipId, result) => set((state) => {
