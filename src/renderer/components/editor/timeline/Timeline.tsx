@@ -240,9 +240,10 @@ export const Timeline: React.FC<TimelineProps> = ({ className = '' }) => {
         </div>
 
         {/* Timeline Tracks */}
-        <div 
+        <div
           ref={timelineRef}
           className="timeline-tracks flex-1 overflow-auto custom-scrollbar"
+          style={{ cursor: currentTool?.type === 'select' ? 'crosshair' : 'default' }}
           onScroll={handleScroll}
           onMouseDown={handleMouseDown}
           onClick={handleTimelineClick}
@@ -331,7 +332,6 @@ const timelineStyles = `
 
   .timeline-tracks {
     @apply flex-1 relative;
-    cursor: ${currentTool?.type === 'select' ? 'crosshair' : 'default'};
   }
 
   .tracks-container {

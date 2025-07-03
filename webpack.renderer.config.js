@@ -80,13 +80,59 @@ module.exports = (env, argv) => {
           warnings: false,
         },
       },
+      // Remove static file serving to prevent conflicts with in-memory serving
+      // static: false, // Disable static file serving entirely
       static: {
-        directory: path.join(__dirname, 'dist/renderer'),
+        directory: path.join(__dirname, 'public'), // Serve only public assets, not dist
+        publicPath: '/public',
+        serveIndex: false, // Disable directory browsing
+        watch: false, // Disable file watching for static files
+      },
+      historyApiFallback: {
+        index: '/index.html', // Fallback for SPA routing
+        disableDotRule: true,
       },
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
         'Access-Control-Allow-Headers': 'X-Requested-With, content-type, Authorization',
+      },
+      // Add middleware to prevent double responses
+      setupMiddlewares: (middlewares, devServer) => {
+        // Add custom middleware to handle potential conflicts
+        devServer.app.use((req, res, next) => {
+          // Prevent multiple responses to the same request
+          const originalSend = res.send;
+          const originalJson = res.json;
+          const originalEnd = res.end;
+
+          let responseSent = false;
+
+          res.send = function(...args) {
+            if (!responseSent) {
+              responseSent = true;
+              return originalSend.apply(this, args);
+            }
+          };
+
+          res.json = function(...args) {
+            if (!responseSent) {
+              responseSent = true;
+              return originalJson.apply(this, args);
+            }
+          };
+
+          res.end = function(...args) {
+            if (!responseSent) {
+              responseSent = true;
+              return originalEnd.apply(this, args);
+            }
+          };
+
+          next();
+        });
+
+        return middlewares;
       },
     },
   };

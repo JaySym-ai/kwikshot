@@ -327,6 +327,7 @@ export const ModernStreamDashboard: React.FC<ModernStreamDashboardProps> = ({
       <AnimatePresence>
         {(metrics?.droppedFrames > 0 || (networkStats?.packetLoss > 1)) && (
           <motion.div
+            key="performance-alert"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}

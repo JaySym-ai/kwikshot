@@ -346,6 +346,7 @@ export const SmartAudioMixer: React.FC<SmartAudioMixerProps> = ({
       <AnimatePresence>
         {showAddSource && (
           <motion.div
+            key="add-source-modal"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -397,6 +398,7 @@ export const SmartAudioMixer: React.FC<SmartAudioMixerProps> = ({
       <AnimatePresence>
         {showFilters && selectedSourceId && (
           <motion.div
+            key="filters-modal"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

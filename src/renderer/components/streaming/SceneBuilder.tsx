@@ -429,6 +429,7 @@ export const SceneBuilder: React.FC<SceneBuilderProps> = ({
       <AnimatePresence>
         {showSourceMenu && (
           <motion.div
+            key="add-source-menu"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
